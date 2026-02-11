@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Habits</title>
   
-  <!-- Supabase Library -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- SUPABASE LIBRARY -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* --- STYLES (Unchanged) --- */
+    /* --- STYLES (Full Design) --- */
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     :root {
       --bg-color: #000000; --card-bg: #1C1C1E; --text-primary: #FFFFFF;
@@ -21,9 +21,14 @@
     .view-section { display: none; padding-bottom: 20px; }
     .view-section.active { display: block; animation: fadeIn 0.2s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    /* Top Bar */
     .top-bar { display: flex; justify-content: space-between; align-items: flex-end; padding: 16px 20px 10px; position: sticky; top: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); z-index: 100; }
     .app-title { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
     .top-actions { display: flex; align-items: center; gap: 16px; }
+
+    /* Date Selector */
+    .date-selector-container { position: relative; }
     .date-selector { color: var(--text-primary); font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 20px; }
     .date-dropdown { position: absolute; top: 45px; right: 0; background: #2C2C2E; border-radius: 14px; width: 220px; padding: 8px; display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 200; border: 1px solid #38383A; }
     .date-dropdown.active { display: block; }
@@ -31,6 +36,8 @@
     .date-option:hover { background: #3A3A3C; }
     .date-option.selected { color: var(--accent-color); font-weight: 600; }
     .icon-btn { font-size: 22px; color: var(--accent-color); cursor: pointer; padding: 4px; }
+
+    /* Habit List */
     .habit-list { padding: 10px 16px; display: flex; flex-direction: column; gap: 12px; }
     .habit-card { background-color: var(--card-bg); border-radius: 14px; padding: 16px; display: flex; align-items: center; justify-content: space-between; position: relative; }
     .habit-left { display: flex; align-items: center; gap: 14px; flex: 1; cursor: pointer; }
@@ -41,6 +48,8 @@
     .check-circle { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #48484A; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
     .check-circle.completed { background-color: var(--success-color); border-color: var(--success-color); box-shadow: 0 0 15px rgba(48, 209, 88, 0.2); }
     .check-circle.completed::after { content: '✓'; font-size: 18px; color: black; font-weight: 800; }
+
+    /* Stats View */
     .stats-container { padding: 16px; }
     .stats-card-large { background-color: var(--card-bg); border-radius: 18px; padding: 24px 20px; margin-bottom: 16px; text-align: center; }
     .gauge-wrapper { position: relative; width: 180px; height: 90px; margin: 0 auto 10px; overflow: hidden; }
@@ -56,15 +65,21 @@
     .heat-map { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 4px; height: 140px; }
     .heat-dot { width: 14px; height: 14px; background-color: #2C2C2E; border-radius: 4px; }
     .heat-dot.active { background-color: var(--accent-color); }
+
+    /* Goals View */
     .goal-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 12px; }
     .goal-header { display: flex; justify-content: space-between; margin-bottom: 16px; align-items: flex-start; }
     .goal-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
     .goal-date { font-size: 13px; color: var(--text-secondary); }
     .progress-track { background: #2C2C2E; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 12px; }
     .progress-bar { height: 100%; background: var(--accent-color); border-radius: 5px; transition: width 0.3s ease; }
+
+    /* Bottom Nav */
     .bottom-nav { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background-color: rgba(28, 28, 30, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 35px; padding: 6px 8px; display: flex; gap: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 1000; border: 0.5px solid rgba(255,255,255,0.15); }
     .nav-item { width: 50px; height: 50px; border-radius: 25px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #8E8E93; cursor: pointer; transition: all 0.2s ease; }
     .nav-item.active { background-color: #3A3A3C; color: white; }
+
+    /* Modals */
     .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: black; z-index: 2000; display: none; flex-direction: column; animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
     .modal.active { display: flex; }
     .modal-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: #1C1C1E; border-bottom: 0.5px solid #2C2C2E; }
@@ -77,22 +92,20 @@
     .form-input { background: transparent; border: none; color: white; font-size: 17px; flex: 1; margin-left: 12px; outline: none; }
     select:focus, input:focus { outline: none; }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    /* Detail View */
     .habit-detail-view { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: black; z-index: 1500; display: none; flex-direction: column; animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
     .habit-detail-view.active { display: flex; }
     @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
-    
-    /* Connection Status Toast */
-    #connection-status {
-      position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-      background: #FF9F0A; color: black; padding: 6px 12px; border-radius: 20px;
-      font-size: 12px; font-weight: 700; z-index: 3000; display: none;
-    }
+
+    /* Status Toast */
+    #status-bar { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: #FF9F0A; color: black; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; z-index: 3000; display: none; }
   </style>
 </head>
 <body>
 
-  <!-- STATUS TOAST -->
-  <div id="connection-status">Offline Mode</div>
+  <!-- STATUS BAR (Offline Indicator) -->
+  <div id="status-bar">Offline Mode</div>
 
   <!-- VIEW: HABITS -->
   <div id="view-habits" class="view-section active">
@@ -113,7 +126,8 @@
       </div>
     </div>
     <div class="habit-list" id="habits-container">
-      <div style="text-align:center; margin-top:40px; color:#8E8E93;">Starting app...</div>
+      <!-- Habits injected here -->
+      <div style="text-align:center; margin-top:40px; color:#8E8E93;" id="loading-msg">Loading...</div>
     </div>
   </div>
 
@@ -130,6 +144,9 @@
       <div class="stat-box"><div class="stat-label">Consistency</div><div class="stat-value" style="color:var(--accent-color);" id="stats-consistency">0%</div></div>
     </div>
     <div class="stats-card-large" style="text-align: left;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+        <span style="font-weight:600;">Activity Log</span><span style="color:var(--text-secondary); font-size:13px;">Last 60 Days</span>
+      </div>
       <div class="heat-map-container"><div class="heat-map" id="heat-map"></div></div>
     </div>
   </div>
@@ -147,7 +164,7 @@
     <div class="nav-item" onclick="switchView('goals', this)">🎯</div>
   </div>
 
-  <!-- MODALS -->
+  <!-- MODAL: ADD/EDIT HABIT -->
   <div id="modal-habit" class="modal">
     <div class="modal-header">
       <div class="modal-action" onclick="closeModal('habit')">Cancel</div>
@@ -161,12 +178,13 @@
       </div>
       <div class="form-group">
         <div class="form-row"><span>Icon</span><input type="text" id="habit-icon" class="form-input" value="📚" style="text-align:right; width:50px;" /></div>
-        <div class="form-row"><span>Color</span><select id="habit-color" style="background:none; border:none; color:white; text-align:right;"><option value="#0A84FF">Blue</option><option value="#FF453A">Red</option></select></div>
+        <div class="form-row"><span>Color</span><select id="habit-color" style="background:none; border:none; color:white; text-align:right;"><option value="#0A84FF">Blue</option><option value="#FF453A">Red</option><option value="#30D158">Green</option></select></div>
       </div>
       <div class="form-group" id="delete-section" style="display:none; margin-top:30px;"><div class="form-row" style="justify-content: center;"><span class="modal-action danger" onclick="deleteHabit()">Delete Habit</span></div></div>
     </div>
   </div>
 
+  <!-- MODAL: ADD GOAL -->
   <div id="modal-goal" class="modal">
     <div class="modal-header"><div class="modal-action" onclick="closeModal('goal')">Cancel</div><div class="modal-title">New Goal</div><div class="modal-action" onclick="saveGoal()">Save</div></div>
     <div class="modal-content">
@@ -177,6 +195,7 @@
     </div>
   </div>
 
+  <!-- VIEW: HABIT DETAIL -->
   <div id="view-habit-detail" class="habit-detail-view">
     <div class="modal-header"><div class="modal-action" onclick="closeHabitDetail()">← Back</div><div class="modal-title">Details</div><div class="modal-action" onclick="editCurrentHabit()">Edit</div></div>
     <div class="modal-content">
@@ -189,14 +208,15 @@
         <div class="stat-box"><div class="stat-label">Current Streak</div><div class="stat-value" id="detail-streak">0</div></div>
         <div class="stat-box"><div class="stat-label">Total</div><div class="stat-value" id="detail-total">0</div></div>
       </div>
+      <div class="stats-card-large" style="text-align: left;">
+        <div style="font-weight:600; margin-bottom:12px;">History</div>
+        <div class="heat-map-container"><div class="heat-map" id="detail-heatmap" style="grid-template-rows: repeat(7, 1fr);"></div></div>
+      </div>
     </div>
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://dssywydywiqukaagisce.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzc3l3eWR5d2lxdWthYWdpc2NlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3ODQzMjksImV4cCI6MjA4NjM2MDMyOX0.nGzvYHRWGKWPWc8wsjt19Xfx9btCZkyrz-YueksnLkI';
-
-    let supabase = null;
+    // --- APP STATE ---
     let useOffline = false;
     let habits = [];
     let completions = [];
@@ -204,89 +224,78 @@
     let selectedDate = new Date();
     let currentHabitId = null;
 
-    async function initApp() {
-      // 1. Try to init Supabase with a timeout
-      try {
-        if (typeof supabasejs === 'undefined' && typeof window.supabase === 'undefined') {
-          throw new Error("Supabase script failed to load");
-        }
-        
-        // Use global variable
-        const createClient = window.supabase ? window.supabase.createClient : supabasejs.createClient;
-        supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Supabase Config
+    const SUPABASE_URL = 'https://dssywydywiqukaagisce.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzc3l3eWR5d2lxdWthYWdpc2NlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3ODQzMjksImV4cCI6MjA4NjM2MDMyOX0.nGzvYHRWGKWPWc8wsjt19Xfx9btCZkyrz-YueksnLkI';
+    let supabase = null;
 
-        // Race condition: If Supabase takes > 2s, switch to offline
-        const timeout = new Promise((_, reject) => setTimeout(() => reject("Timeout"), 2000));
-        
-        // Try simple fetch to test connection
-        await Promise.race([
-          supabase.from('habits').select('count').limit(1),
-          timeout
+    // --- INIT ---
+    document.addEventListener('DOMContentLoaded', async () => {
+      updateDateDisplay();
+      
+      try {
+        // 1. Check for library
+        if (typeof supabase === 'undefined' && window.supabase) {
+           supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } else if (typeof supabasejs !== 'undefined') {
+           supabase = supabasejs.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } else {
+           throw new Error("Supabase Library failed to load");
+        }
+
+        // 2. Auth
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          await supabase.auth.signUp({ email: `user${Date.now()}@anon.com`, password: 'password123' });
+        }
+
+        // 3. Fetch Data with Timeout
+        const timeout = new Promise((_, reject) => setTimeout(() => reject("Timeout"), 3000));
+        const fetchData = Promise.all([
+          supabase.from('habits').select('*'),
+          supabase.from('completions').select('*'),
+          supabase.from('goals').select('*')
         ]);
 
-        console.log("Connected to Supabase");
-        await loadCloudData();
+        const [h, c, g] = await Promise.race([fetchData, timeout]);
+
+        if (h.data) habits = h.data;
+        if (c.data) completions = c.data;
+        if (g.data) goals = g.data;
+
+        renderHabits(); renderStats(); renderGoals();
 
       } catch (err) {
-        console.warn("Switching to Offline Mode:", err);
+        console.warn("Using Offline Mode:", err);
         enableOfflineMode();
       }
-      
-      updateDateDisplay();
-    }
+    });
 
     function enableOfflineMode() {
       useOffline = true;
-      document.getElementById('connection-status').style.display = 'block';
+      document.getElementById('status-bar').style.display = 'block';
       
-      // Load from LocalStorage
       const savedHabits = localStorage.getItem('habits');
       const savedComps = localStorage.getItem('completions');
       const savedGoals = localStorage.getItem('goals');
-      
+
       if (savedHabits) habits = JSON.parse(savedHabits);
-      else {
-        // Default data for first run offline
-        habits = [{id: 1, name: "Read", description: "Offline mode", icon: "📚", icon_color: "#FF453A"}];
-      }
+      else habits = [{ id: 1, name: "Offline Habit", description: "Example", icon: "📱", icon_color: "#0A84FF" }]; // Default
+      
       if (savedComps) completions = JSON.parse(savedComps);
       if (savedGoals) goals = JSON.parse(savedGoals);
 
-      renderHabits();
-      renderStats();
-      renderGoals();
+      renderHabits(); renderStats(); renderGoals();
     }
 
-    async function loadCloudData() {
-      // Auto-Login Anon
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        await supabase.auth.signUp({ email: `user${Date.now()}@anon.com`, password: 'password123' });
-      }
-
-      const [h, c, g] = await Promise.all([
-        supabase.from('habits').select('*'),
-        supabase.from('completions').select('*'),
-        supabase.from('goals').select('*')
-      ]);
-
-      if (h.data) habits = h.data;
-      if (c.data) completions = c.data;
-      if (g.data) goals = g.data;
-
-      renderHabits();
-      renderStats();
-      renderGoals();
-    }
-
-    // --- RENDERING ---
+    // --- RENDER LOGIC ---
     function renderHabits() {
       const container = document.getElementById('habits-container');
       container.innerHTML = '';
       const dateKey = selectedDate.toISOString().split('T')[0];
 
       if (habits.length === 0) {
-        container.innerHTML = '<div style="text-align:center;margin-top:40px;color:#8E8E93">No habits found</div>';
+        container.innerHTML = '<div style="text-align:center;margin-top:40px;color:#8E8E93">No habits yet. Tap + to add one.</div>';
         return;
       }
 
@@ -309,29 +318,40 @@
       const dateKey = selectedDate.toISOString().split('T')[0];
       
       if (isCompleted) {
-        // Remove
         const rec = completions.find(c => c.habit_id == id && c.completed_at.startsWith(dateKey));
         if (rec) {
           completions = completions.filter(c => c != rec);
-          if (useOffline) localStorage.setItem('completions', JSON.stringify(completions));
-          else await supabase.from('completions').delete().eq('id', rec.id);
+          syncData('delete', 'completions', rec);
         }
       } else {
-        // Add
         const newC = { habit_id: id, completed_at: new Date(selectedDate).toISOString(), id: Date.now() }; // Temp ID
         completions.push(newC);
-        if (useOffline) localStorage.setItem('completions', JSON.stringify(completions));
-        else {
-           delete newC.id; // Let DB assign ID
-           const { data } = await supabase.from('completions').insert(newC).select();
-           if(data) {
-             completions.pop(); // Remove temp
-             completions.push(data[0]); // Add real
-           }
-        }
+        syncData('insert', 'completions', newC);
       }
-      renderHabits();
-      renderStats();
+      renderHabits(); renderStats();
+    }
+
+    async function syncData(action, table, payload) {
+      if (useOffline) {
+        localStorage.setItem('habits', JSON.stringify(habits));
+        localStorage.setItem('completions', JSON.stringify(completions));
+        localStorage.setItem('goals', JSON.stringify(goals));
+        return;
+      }
+      
+      if (action === 'insert') {
+        const { id, ...data } = payload; // Remove temp ID
+        const { data: res } = await supabase.from(table).insert(data).select();
+        // Update temp ID with real ID if needed
+        if (res && table === 'completions') {
+           const idx = completions.findIndex(c => c.id === payload.id);
+           if (idx !== -1) completions[idx] = res[0];
+        }
+      } else if (action === 'delete') {
+        await supabase.from(table).delete().eq('id', payload.id);
+      } else if (action === 'update') {
+        await supabase.from(table).update(payload).eq('id', payload.id);
+      }
     }
 
     async function saveHabit() {
@@ -341,23 +361,109 @@
       if (!name) return;
 
       const newHabit = { name, description: desc, icon };
-      
-      if (useOffline) {
-        newHabit.id = Date.now();
-        habits.push(newHabit);
-        localStorage.setItem('habits', JSON.stringify(habits));
+      if (currentHabitId) {
+        // Edit
+        const habit = habits.find(h => h.id === currentHabitId);
+        Object.assign(habit, newHabit);
+        syncData('update', 'habits', { ...newHabit, id: currentHabitId });
       } else {
-        const { data } = await supabase.from('habits').insert(newHabit).select();
-        if (data) habits.push(data[0]);
+        // New
+        const temp = { ...newHabit, id: Date.now() };
+        habits.push(temp);
+        syncData('insert', 'habits', temp);
       }
+      
       closeModal('habit');
       renderHabits();
     }
 
-    // --- INIT ---
-    initApp();
+    async function deleteHabit() {
+      if(confirm("Delete habit?")) {
+        habits = habits.filter(h => h.id !== currentHabitId);
+        syncData('delete', 'habits', { id: currentHabitId });
+        closeModal('habit');
+        renderHabits();
+      }
+    }
 
-    // Helpers
+    // --- STATS & GOALS ---
+    function renderStats() {
+      const dateKey = new Date().toISOString().split('T')[0];
+      const completedToday = completions.filter(c => c.completed_at.startsWith(dateKey)).length;
+      const total = habits.length;
+      const pct = total === 0 ? 0 : Math.round((completedToday / total) * 100);
+
+      document.getElementById('stats-percentage').textContent = pct + '%';
+      const deg = -225 + ((pct / 100) * 180);
+      document.getElementById('gauge-fill').style.transform = `rotate(${deg}deg)`;
+      document.getElementById('stats-accuracy').textContent = pct + '%';
+      
+      renderHeatmap('heat-map');
+    }
+
+    function renderHeatmap(elementId) {
+      const container = document.getElementById(elementId);
+      if(!container) return;
+      container.innerHTML = '';
+      for (let i = 0; i < 70; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - (69 - i));
+        const dateStr = d.toISOString().split('T')[0];
+        // Filter: global or specific habit?
+        let count = 0;
+        if (elementId === 'detail-heatmap') {
+           count = completions.filter(c => c.habit_id === currentHabitId && c.completed_at.startsWith(dateStr)).length;
+        } else {
+           count = completions.filter(c => c.completed_at.startsWith(dateStr)).length;
+        }
+        
+        const dot = document.createElement('div');
+        dot.className = 'heat-dot';
+        if (count > 0) dot.classList.add('active');
+        container.appendChild(dot);
+      }
+    }
+
+    function renderGoals() {
+      const container = document.getElementById('goals-container');
+      container.innerHTML = '';
+      goals.forEach(g => {
+        const div = document.createElement('div');
+        div.className = 'goal-card';
+        div.innerHTML = `
+          <div class="goal-header">
+            <div><div class="goal-title">${g.title}</div><div class="goal-date">Target: ${g.target_date || ''}</div></div>
+            <div style="font-weight:700; color:var(--accent-color);">${g.progress || 0}%</div>
+          </div>
+          <div class="progress-track"><div class="progress-bar" style="width: ${g.progress || 0}%"></div></div>
+          <div style="margin-top:16px; text-align:right;">
+             <div onclick="updateGoal(${g.id}, 10)" style="display:inline-block; background:#3A3A3C; color:white; padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer;">+10% Track</div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function updateGoal(id, amount) {
+      const g = goals.find(x => x.id === id);
+      g.progress = Math.min(100, (g.progress || 0) + amount);
+      renderGoals();
+      syncData('update', 'goals', { id, progress: g.progress });
+    }
+
+    async function saveGoal() {
+       const title = document.getElementById('goal-title').value;
+       const date = document.getElementById('goal-date').value;
+       if (title) {
+         const newGoal = { title, target_date: date, progress: 0, id: Date.now() };
+         goals.push(newGoal);
+         renderGoals();
+         closeModal('goal');
+         syncData('insert', 'goals', newGoal);
+       }
+    }
+
+    // --- UI HELPERS ---
     function updateDateDisplay() {
       const today = new Date();
       let label = selectedDate.toLocaleDateString();
@@ -366,18 +472,45 @@
     }
     function toggleDateDropdown() { document.getElementById('date-dropdown').classList.toggle('active'); }
     function changeDate(off) { selectedDate.setDate(selectedDate.getDate() + off); updateDateDisplay(); renderHabits(); document.getElementById('date-dropdown').classList.remove('active'); }
-    function openAddModal() { document.getElementById('modal-habit').classList.add('active'); }
+    function openAddModal() { 
+      currentHabitId = null;
+      document.getElementById('habit-modal-title').textContent = "New Habit";
+      document.getElementById('habit-name').value = "";
+      document.getElementById('habit-desc').value = "";
+      document.getElementById('delete-section').style.display = 'none';
+      document.getElementById('modal-habit').classList.add('active'); 
+    }
+    function editCurrentHabit() {
+      const habit = habits.find(h => h.id === currentHabitId);
+      document.getElementById('habit-modal-title').textContent = "Edit Habit";
+      document.getElementById('habit-name').value = habit.name;
+      document.getElementById('habit-desc').value = habit.description;
+      document.getElementById('habit-icon').value = habit.icon;
+      document.getElementById('delete-section').style.display = 'block';
+      closeHabitDetail();
+      document.getElementById('modal-habit').classList.add('active');
+    }
+    function openHabitDetail(id) {
+      currentHabitId = id;
+      const habit = habits.find(h => h.id === id);
+      document.getElementById('detail-name').textContent = habit.name;
+      document.getElementById('detail-desc').textContent = habit.description;
+      document.getElementById('detail-icon').textContent = habit.icon;
+      const total = completions.filter(c => c.habit_id === id).length;
+      document.getElementById('detail-total').textContent = total;
+      document.getElementById('detail-streak').textContent = "🔥 " + total;
+      renderHeatmap('detail-heatmap');
+      document.getElementById('view-habit-detail').classList.add('active');
+    }
     function closeModal(id) { document.getElementById('modal-' + id).classList.remove('active'); }
+    function closeHabitDetail() { document.getElementById('view-habit-detail').classList.remove('active'); }
     function switchView(v, el) { 
       document.querySelectorAll('.view-section').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById('view-' + v).classList.add('active');
+      if (el) el.classList.add('active');
     }
-    // Stub other functions for brevity in fallback mode
-    function openHabitDetail(id) {}
-    function renderStats() {}
-    function renderGoals() {}
     function openGoalModal() { document.getElementById('modal-goal').classList.add('active'); }
-    function saveGoal() {}
   </script>
 </body>
 </html>
