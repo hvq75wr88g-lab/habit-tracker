@@ -275,7 +275,6 @@
   </div>
 
   <script>
-    // ===================== DATA STORE =====================
     var habits = [
       { id: 1, name: "Reading", desc: "5 pages", icon: "📚", color: "#FF453A", frequency: 7, completions: [] },
       { id: 2, name: "Drink Water", desc: "3000 ml", icon: "💧", color: "#0A84FF", frequency: 7, completions: [] },
@@ -286,8 +285,6 @@
     var currentHabitId = null;
     var currentGoalId = null;
 
-    // ===================== HELPER: LOCAL DATE STRING (YYYY-MM-DD) =====================
-    // CRITICAL: Always use local timezone, never UTC, to avoid off-by-one day bugs
     function localDateStr(d) {
       var y = d.getFullYear();
       var m = String(d.getMonth() + 1).padStart(2, '0');
@@ -295,12 +292,8 @@
       return y + '-' + m + '-' + day;
     }
 
-    // ===================== INIT =====================
     document.addEventListener('DOMContentLoaded', function() {
-      renderHabits();
-      renderStats();
-      renderGoals();
-      updateDateDisplay();
+      renderHabits(); renderStats(); renderGoals(); updateDateDisplay();
     });
 
     // ===================== WEEK HELPERS =====================
@@ -310,6 +303,19 @@
       var diff = day === 0 ? -6 : 1 - day;
       dt.setDate(dt.getDate() + diff);
       return dt;
+    }
+
+    // Count how many days from Monday to today (or end of week if past)
+    function daysElapsedInWeek(d) {
+      var mon = getMonday(d);
+      var today = new Date();
+      today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      var endOfWeek = new Date(mon);
+      endOfWeek.setDate(endOfWeek.getDate() + 6);
+      // Use the earlier of today or Sunday as the "end"
+      var end = today < endOfWeek ? today : endOfWeek;
+      var diff = Math.round((end - mon) / 86400000) + 1;
+      return Math.max(1, Math.min(7, diff));
     }
 
     function weekCompletions(habit, d) {
@@ -325,7 +331,7 @@
       return count;
     }
 
-    // ===================== HABITS RENDERING =====================
+    // ===================== HABITS =====================
     function renderHabits() {
       var container = document.getElementById('habits-container');
       container.innerHTML = '';
@@ -360,19 +366,16 @@
     function toggleHabit(id) {
       var habit = habits.find(function(h) { return h.id === id; });
       var dateKey = selectedDate.toDateString();
-
       if (habit.completions.indexOf(dateKey) !== -1) {
         habit.completions = habit.completions.filter(function(d) { return d !== dateKey; });
       } else {
         habit.completions.push(dateKey);
         if (navigator.vibrate) navigator.vibrate(10);
       }
-
-      renderHabits();
-      renderStats();
+      renderHabits(); renderStats();
     }
 
-    // ===================== DATE LOGIC =====================
+    // ===================== DATE =====================
     function toggleDateDropdown() {
       document.getElementById('date-dropdown').classList.toggle('active');
     }
@@ -428,24 +431,19 @@
       var color = document.getElementById('habit-color').value;
       var frequency = parseInt(document.getElementById('habit-frequency').value);
       if (!name) return;
-
       if (currentHabitId) {
         var habit = habits.find(function(h) { return h.id === currentHabitId; });
         habit.name = name; habit.desc = desc; habit.icon = icon; habit.color = color; habit.frequency = frequency;
       } else {
         habits.push({ id: Date.now(), name: name, desc: desc, icon: icon, color: color, frequency: frequency, completions: [] });
       }
-      closeModal('habit');
-      renderHabits();
-      renderStats();
+      closeModal('habit'); renderHabits(); renderStats();
     }
 
     function deleteHabit() {
       if (confirm("Delete this habit?")) {
         habits = habits.filter(function(h) { return h.id !== currentHabitId; });
-        closeModal('habit');
-        renderHabits();
-        renderStats();
+        closeModal('habit'); renderHabits(); renderStats();
       }
     }
 
@@ -457,16 +455,13 @@
     function openHabitDetail(id) {
       currentHabitId = id;
       var habit = habits.find(function(h) { return h.id === id; });
-
       document.getElementById('detail-name').textContent = habit.name;
       document.getElementById('detail-desc').textContent = habit.desc;
       document.getElementById('detail-icon').textContent = habit.icon;
       document.getElementById('detail-total').textContent = habit.completions.length;
       document.getElementById('detail-streak').textContent = calculateStreak(habit);
-
       var freq = habit.frequency || 7;
       document.getElementById('detail-freq').textContent = freq === 7 ? "Every day" : freq + " times per week";
-
       renderDetailHeatmap(habit);
       document.getElementById('view-habit-detail').classList.add('active');
     }
@@ -478,27 +473,20 @@
     function calculateStreak(habit) {
       if (habit.completions.length === 0) return "0";
       var freq = habit.frequency || 7;
-
       if (freq === 7) {
         var streak = 0;
-        var d = new Date();
-        d.setHours(0,0,0,0);
+        var d = new Date(); d.setHours(0,0,0,0);
         while (habit.completions.indexOf(d.toDateString()) !== -1) {
-          streak++;
-          d.setDate(d.getDate() - 1);
+          streak++; d.setDate(d.getDate() - 1);
         }
         return "🔥 " + streak;
       } else {
         var streak = 0;
         var checkDate = new Date();
         while (true) {
-          var wc = weekCompletions(habit, checkDate);
-          if (wc >= freq) {
-            streak++;
-            checkDate.setDate(checkDate.getDate() - 7);
-          } else {
-            break;
-          }
+          if (weekCompletions(habit, checkDate) >= freq) {
+            streak++; checkDate.setDate(checkDate.getDate() - 7);
+          } else break;
         }
         return "🔥 " + streak + (streak === 1 ? " week" : " weeks");
       }
@@ -521,51 +509,60 @@
       var deg = -225 + ((pct / 100) * 180);
       document.getElementById('gauge-fill').style.transform = 'rotate(' + deg + 'deg)';
 
-      // ACCURACY: For daily habits, did you do it today? For weekly habits, did you hit target this week?
+      // ACCURACY: daily habits = did you do it today? weekly = hit target this week?
       var habitsOnTarget = 0;
       habits.forEach(function(h) {
         var freq = h.frequency || 7;
         if (freq === 7) {
-          // Daily: check if completed today
           if (h.completions.indexOf(today.toDateString()) !== -1) habitsOnTarget++;
         } else {
-          // Weekly: check if weekly target met
           if (weekCompletions(h, today) >= freq) habitsOnTarget++;
         }
       });
       var accuracy = habits.length === 0 ? 0 : Math.round((habitsOnTarget / habits.length) * 100);
       document.getElementById('stats-accuracy').textContent = accuracy + '%';
 
-      // CONSISTENCY: % of last 4 weeks where all habits met their targets
-      var consistentWeeks = 0;
-      for (var w = 0; w < 4; w++) {
-        var weekDate = new Date(today);
-        weekDate.setDate(weekDate.getDate() - (w * 7));
-        var allMet = true;
+      // CONSISTENCY: of the days elapsed this week, what % did you show up?
+      // "Show up" = for each elapsed day, did you complete all daily habits that day
+      //             + for weekly habits, are you on track (completions >= expected so far)?
+      var elapsed = daysElapsedInWeek(today);
+      var mon = getMonday(today);
+      var perfectDays = 0;
+
+      for (var d = 0; d < elapsed; d++) {
+        var checkDay = new Date(mon);
+        checkDay.setDate(checkDay.getDate() + d);
+        var dayKey = checkDay.toDateString();
+        var allDailyDone = true;
         for (var i = 0; i < habits.length; i++) {
-          var h = habits[i];
-          var freq = h.frequency || 7;
-          if (freq === 7) {
-            // For daily habits in a past week, check if all 7 days were completed
-            var mon = getMonday(weekDate);
-            var allDays = true;
-            for (var d = 0; d < 7; d++) {
-              var checkDay = new Date(mon);
-              checkDay.setDate(checkDay.getDate() + d);
-              if (checkDay > today) continue; // Don't count future days
-              if (h.completions.indexOf(checkDay.toDateString()) === -1) {
-                allDays = false;
-                break;
-              }
+          if ((habits[i].frequency || 7) === 7) {
+            if (habits[i].completions.indexOf(dayKey) === -1) {
+              allDailyDone = false; break;
             }
-            if (!allDays) { allMet = false; break; }
-          } else {
-            if (weekCompletions(h, weekDate) < freq) { allMet = false; break; }
           }
         }
-        if (allMet && habits.length > 0) consistentWeeks++;
+        if (allDailyDone) perfectDays++;
       }
-      var consistency = habits.length === 0 ? 0 : Math.round((consistentWeeks / 4) * 100);
+
+      // Also check weekly habits are on pace
+      var weeklyOnTrack = true;
+      habits.forEach(function(h) {
+        var freq = h.frequency || 7;
+        if (freq < 7) {
+          // Expected by now: (freq/7) * elapsed days, rounded down
+          var expected = Math.floor((freq / 7) * elapsed);
+          if (weekCompletions(h, today) < expected) weeklyOnTrack = false;
+        }
+      });
+
+      var consistency;
+      if (habits.length === 0) {
+        consistency = 0;
+      } else {
+        var dailyConsistency = Math.round((perfectDays / elapsed) * 100);
+        // Blend: if weekly habits are off track, cap at 75%
+        consistency = weeklyOnTrack ? dailyConsistency : Math.min(dailyConsistency, 75);
+      }
       document.getElementById('stats-consistency').textContent = consistency + '%';
 
       renderHeatmap();
@@ -575,8 +572,7 @@
       var container = document.getElementById('heat-map');
       container.innerHTML = '';
       for (var i = 0; i < 70; i++) {
-        var d = new Date();
-        d.setDate(d.getDate() - (69 - i));
+        var d = new Date(); d.setDate(d.getDate() - (69 - i));
         var dateKey = d.toDateString();
         var done = habits.filter(function(h) { return h.completions.indexOf(dateKey) !== -1; }).length;
         var active = done > 0 && done >= habits.length / 2;
@@ -591,8 +587,7 @@
       var container = document.getElementById('detail-heatmap');
       container.innerHTML = '';
       for (var i = 0; i < 60; i++) {
-        var d = new Date();
-        d.setDate(d.getDate() - (59 - i));
+        var d = new Date(); d.setDate(d.getDate() - (59 - i));
         var active = habit.completions.indexOf(d.toDateString()) !== -1;
         var dot = document.createElement('div');
         dot.className = 'heat-dot';
@@ -604,7 +599,6 @@
     // ===================== GOALS =====================
     function openGoalModal(editId) {
       currentGoalId = editId || null;
-
       if (currentGoalId) {
         var goal = goals.find(function(g) { return g.id === currentGoalId; });
         document.getElementById('goal-modal-title').textContent = "Edit Goal";
@@ -617,7 +611,6 @@
         document.getElementById('goal-date').value = '';
         document.getElementById('goal-delete-section').style.display = 'none';
       }
-
       document.getElementById('modal-goal').classList.add('active');
     }
 
@@ -625,38 +618,31 @@
       var title = document.getElementById('goal-title').value;
       var date = document.getElementById('goal-date').value;
       if (!title || !date) return;
-
       if (currentGoalId) {
         var goal = goals.find(function(g) { return g.id === currentGoalId; });
-        goal.title = title;
-        goal.date = date;
+        goal.title = title; goal.date = date;
         goal.checkDays = buildCheckDays(goal.startDate, date);
         var validDays = new Set(goal.checkDays);
         goal.checked = (goal.checked || []).filter(function(d) { return validDays.has(d); });
       } else {
         var startDate = localDateStr(new Date());
-        var checkDays = buildCheckDays(startDate, date);
         goals.push({
           id: Date.now(), title: title, date: date, startDate: startDate,
-          checkDays: checkDays, checked: []
+          checkDays: buildCheckDays(startDate, date), checked: []
         });
       }
-
-      renderGoals();
-      closeModal('goal');
+      renderGoals(); closeModal('goal');
     }
 
     function deleteGoal() {
       if (confirm("Delete this goal?")) {
         goals = goals.filter(function(g) { return g.id !== currentGoalId; });
-        closeModal('goal');
-        renderGoals();
+        closeModal('goal'); renderGoals();
       }
     }
 
     function buildCheckDays(startStr, endStr) {
       var days = [];
-      // Parse as local dates (add T12:00 to avoid UTC midnight issues)
       var start = new Date(startStr + 'T12:00:00');
       var end = new Date(endStr + 'T12:00:00');
       var d = new Date(start);
@@ -680,35 +666,23 @@
     function renderGoals() {
       var container = document.getElementById('goals-container');
       container.innerHTML = '';
-
       if (goals.length === 0) {
         container.innerHTML = '<div style="color:#8E8E93; text-align:center; margin-top:40px;">No goals yet. Tap + to add one.</div>';
         return;
       }
-
       goals.forEach(function(g) {
         var totalDays = g.checkDays ? g.checkDays.length : 1;
         var checkedCount = g.checked ? g.checked.length : 0;
         var pct = Math.round((checkedCount / totalDays) * 100);
-
         var todayStr = localDateStr(new Date());
 
-        // Show: up to 5 past days + today + tomorrow
+        // Show: today + up to 7 past days (NO future days)
         var nearbyDays = (g.checkDays || []).filter(function(d) {
+          if (d > todayStr) return false; // No future days
           if (d === todayStr) return true;
-          // Past: up to 5 days ago
-          if (d < todayStr) {
-            var diffMs = new Date(todayStr + 'T12:00:00') - new Date(d + 'T12:00:00');
-            var diffDays = Math.round(diffMs / 86400000);
-            return diffDays <= 5;
-          }
-          // Future: only tomorrow
-          if (d > todayStr) {
-            var diffMs = new Date(d + 'T12:00:00') - new Date(todayStr + 'T12:00:00');
-            var diffDays = Math.round(diffMs / 86400000);
-            return diffDays <= 1;
-          }
-          return false;
+          var diffMs = new Date(todayStr + 'T12:00:00') - new Date(d + 'T12:00:00');
+          var diffDays = Math.round(diffMs / 86400000);
+          return diffDays <= 7;
         });
 
         var checklistHTML = '';
@@ -722,9 +696,8 @@
             var dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
             label = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
           }
-          var isFuture = day > todayStr;
           checklistHTML +=
-            '<div class="goal-check-row" style="' + (isFuture ? 'opacity:0.5' : '') + '">' +
+            '<div class="goal-check-row">' +
               '<div class="goal-check ' + (isChecked ? 'checked' : '') + '" onclick="toggleGoalDay(' + g.id + ', \'' + day + '\')"></div>' +
               '<span class="goal-check-label ' + (isChecked ? 'checked' : '') + '">' + label + '</span>' +
             '</div>';
@@ -762,7 +735,6 @@
       }
     }
 
-    // ===================== NAVIGATION =====================
     function switchView(viewName, el) {
       document.querySelectorAll('.view-section').forEach(function(v) { v.classList.remove('active'); });
       document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
