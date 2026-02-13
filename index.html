@@ -4,743 +4,375 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Habits</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    :root {
-      --bg-color: #000000; --card-bg: #1C1C1E; --text-primary: #FFFFFF;
-      --text-secondary: #8E8E93; --accent-color: #0A84FF; --success-color: #30D158;
-      --danger-color: #FF453A; --separator: #38383A;
-      --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
-    }
-    body { background-color: var(--bg-color); color: var(--text-primary); font-family: var(--font-family); padding-bottom: 90px; overflow-x: hidden; }
-    .view-section { display: none; padding-bottom: 20px; }
-    .view-section.active { display: block; animation: fadeIn 0.2s ease; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .top-bar { display: flex; justify-content: space-between; align-items: flex-end; padding: 16px 20px 10px; position: sticky; top: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); z-index: 100; }
-    .app-title { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
-    .top-actions { display: flex; align-items: center; gap: 16px; }
-    .date-selector-container { position: relative; }
-    .date-selector { color: var(--text-primary); font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 20px; }
-    .date-dropdown { position: absolute; top: 45px; right: 0; background: #2C2C2E; border-radius: 14px; width: 220px; padding: 8px; display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 200; border: 1px solid #38383A; }
-    .date-dropdown.active { display: block; }
-    .date-option { padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px; display: flex; justify-content: space-between; }
-    .date-option:hover { background: #3A3A3C; }
-    .date-option.selected { color: var(--accent-color); font-weight: 600; }
-    .icon-btn { font-size: 22px; color: var(--accent-color); cursor: pointer; padding: 4px; }
-    .habit-list { padding: 10px 16px; display: flex; flex-direction: column; gap: 12px; }
-    .habit-card { background-color: var(--card-bg); border-radius: 14px; padding: 16px; display: flex; align-items: center; justify-content: space-between; position: relative; }
-    .habit-left { display: flex; align-items: center; gap: 14px; flex: 1; cursor: pointer; }
-    .habit-icon { font-size: 24px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border-radius: 12px; }
-    .habit-details { display: flex; flex-direction: column; gap: 4px; }
-    .habit-name { font-size: 17px; font-weight: 600; }
-    .habit-meta { font-size: 13px; color: var(--text-secondary); }
-    .check-circle { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #48484A; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); flex-shrink: 0; }
-    .check-circle.completed { background-color: var(--success-color); border-color: var(--success-color); box-shadow: 0 0 15px rgba(48, 209, 88, 0.2); }
-    .check-circle.completed::after { content: '\2713'; font-size: 18px; color: black; font-weight: 800; }
-    .week-badge { font-size: 11px; color: var(--text-secondary); background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 10px; margin-left: 8px; white-space: nowrap; }
-    .week-badge.complete { color: var(--success-color); background: rgba(48, 209, 88, 0.1); }
-    .stats-container { padding: 16px; }
-    .stats-card-large { background-color: var(--card-bg); border-radius: 18px; padding: 24px 20px; margin-bottom: 16px; text-align: center; }
-    .gauge-wrapper { position: relative; width: 180px; height: 90px; margin: 0 auto 10px; overflow: hidden; }
-    .gauge-arc-bg { position: absolute; top: 0; left: 0; width: 180px; height: 180px; border-radius: 50%; border: 16px solid #2C2C2E; box-sizing: border-box; }
-    .gauge-arc-fill { position: absolute; top: 0; left: 0; width: 180px; height: 180px; border-radius: 50%; border: 16px solid transparent; border-top-color: var(--accent-color); border-right-color: var(--accent-color); box-sizing: border-box; transform: rotate(-45deg); transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
-    .gauge-label-main { font-size: 42px; font-weight: 800; color: white; margin-top: -10px; }
-    .gauge-label-sub { font-size: 13px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-    .stat-box { background-color: var(--card-bg); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; height: 110px; }
-    .stat-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
-    .stat-value { font-size: 28px; font-weight: 700; color: var(--success-color); }
-    .heat-map-container { overflow-x: auto; padding-bottom: 10px; }
-    .heat-map { display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 4px; height: 140px; }
-    .heat-dot { width: 14px; height: 14px; background-color: #2C2C2E; border-radius: 4px; }
-    .heat-dot.active { background-color: var(--accent-color); }
-    .goal-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 12px; }
-    .goal-header { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-start; }
-    .goal-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-    .goal-date { font-size: 13px; color: var(--text-secondary); }
-    .progress-track { background: #2C2C2E; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 12px; }
-    .progress-bar { height: 100%; background: var(--accent-color); border-radius: 5px; transition: width 0.3s ease; }
-    .goal-checklist { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
-    .goal-check-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #2C2C2E; font-size: 15px; }
-    .goal-check-row:last-child { border-bottom: none; }
-    .goal-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #48484A; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; }
-    .goal-check.checked { background: var(--accent-color); border-color: var(--accent-color); }
-    .goal-check.checked::after { content: '\2713'; font-size: 14px; color: white; font-weight: 800; }
-    .goal-check-label { color: var(--text-secondary); font-size: 14px; }
-    .goal-check-label.checked { color: white; text-decoration: line-through; text-decoration-color: #48484A; }
-    .goal-actions { display: flex; gap: 10px; margin-top: 14px; justify-content: flex-end; }
-    .goal-action-btn { background: #3A3A3C; color: white; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
-    .goal-action-btn.danger { background: rgba(255,69,58,0.15); color: var(--danger-color); }
-    .bottom-nav { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background-color: rgba(28, 28, 30, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 35px; padding: 6px 8px; display: flex; gap: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 1000; border: 0.5px solid rgba(255,255,255,0.15); }
-    .nav-item { width: 50px; height: 50px; border-radius: 25px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #8E8E93; cursor: pointer; transition: all 0.2s ease; }
-    .nav-item.active { background-color: #3A3A3C; color: white; }
-    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: black; z-index: 2000; display: none; flex-direction: column; animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
-    .modal.active { display: flex; }
-    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    .modal-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: #1C1C1E; border-bottom: 0.5px solid #2C2C2E; }
-    .modal-content { padding: 20px; flex: 1; overflow-y: auto; }
-    .modal-action { color: var(--accent-color); font-size: 17px; cursor: pointer; }
-    .modal-action.danger { color: var(--danger-color); }
-    .form-group { background: #2C2C2E; border-radius: 12px; padding: 0 16px; margin-bottom: 24px; }
-    .form-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 0.5px solid #38383A; }
-    .form-row:last-child { border-bottom: none; }
-    .form-input { background: transparent; border: none; color: white; font-size: 17px; flex: 1; margin-left: 12px; outline: none; }
-    select:focus, input:focus { outline: none; }
-    .habit-detail-view { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: black; z-index: 1500; display: none; flex-direction: column; animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-    .habit-detail-view.active { display: flex; }
-    @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
-    .hidden { display: none !important; }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    :root{--bg:#000;--card:#1C1C1E;--txt:#FFF;--txt2:#8E8E93;--accent:#0A84FF;--ok:#30D158;--danger:#FF453A;--sep:#38383A;--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif}
+    body{background:var(--bg);color:var(--txt);font-family:var(--font);padding-bottom:90px;overflow-x:hidden}
+    .view-section{display:none;padding-bottom:20px}.view-section.active{display:block;animation:fadeIn .2s ease}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .top-bar{display:flex;justify-content:space-between;align-items:flex-end;padding:16px 20px 10px;position:sticky;top:0;background:rgba(0,0,0,.8);backdrop-filter:blur(20px);z-index:100}
+    .app-title{font-size:34px;font-weight:700;letter-spacing:-.5px}
+    .top-actions{display:flex;align-items:center;gap:16px}
+    .date-sel-wrap{position:relative}
+    .date-sel{color:var(--txt);font-size:17px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(255,255,255,.1);padding:6px 14px;border-radius:20px}
+    .date-dd{position:absolute;top:45px;right:0;background:#2C2C2E;border-radius:14px;width:220px;padding:8px;display:none;box-shadow:0 10px 40px rgba(0,0,0,.6);z-index:200;border:1px solid var(--sep)}
+    .date-dd.active{display:block}
+    .date-opt{padding:12px;border-radius:8px;cursor:pointer;font-size:16px}.date-opt:hover{background:#3A3A3C}.date-opt.selected{color:var(--accent);font-weight:600}
+    .icon-btn{font-size:22px;color:var(--accent);cursor:pointer;padding:4px}
+    .habit-list{padding:10px 16px;display:flex;flex-direction:column;gap:12px}
+    .habit-card{background:var(--card);border-radius:14px;padding:16px;display:flex;align-items:center;justify-content:space-between}
+    .habit-left{display:flex;align-items:center;gap:14px;flex:1;cursor:pointer}
+    .habit-icon{font-size:24px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border-radius:12px}
+    .habit-details{display:flex;flex-direction:column;gap:4px}
+    .habit-name{font-size:17px;font-weight:600}.habit-meta{font-size:13px;color:var(--txt2)}
+    .chk{width:30px;height:30px;border-radius:50%;border:2px solid #48484A;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s cubic-bezier(.2,.8,.2,1);flex-shrink:0}
+    .chk.done{background:var(--ok);border-color:var(--ok);box-shadow:0 0 15px rgba(48,209,88,.2)}.chk.done::after{content:'\2713';font-size:18px;color:#000;font-weight:800}
+    .wk-badge{font-size:11px;color:var(--txt2);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:10px;margin-left:8px;white-space:nowrap}.wk-badge.complete{color:var(--ok);background:rgba(48,209,88,.1)}
+    .stats-container{padding:16px}
+    .stats-card{background:var(--card);border-radius:18px;padding:24px 20px;margin-bottom:16px;text-align:center}
+    .gauge-wrap{position:relative;width:180px;height:90px;margin:0 auto 10px;overflow:hidden}
+    .gauge-bg{position:absolute;top:0;left:0;width:180px;height:180px;border-radius:50%;border:16px solid #2C2C2E;box-sizing:border-box}
+    .gauge-fill{position:absolute;top:0;left:0;width:180px;height:180px;border-radius:50%;border:16px solid transparent;border-top-color:var(--accent);border-right-color:var(--accent);box-sizing:border-box;transform:rotate(-45deg);transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+    .gauge-main{font-size:42px;font-weight:800;color:#fff;margin-top:-10px}.gauge-sub{font-size:13px;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    .stat-box{background:var(--card);border-radius:16px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;height:110px}
+    .stat-label{font-size:13px;color:var(--txt2);font-weight:500}.stat-val{font-size:28px;font-weight:700;color:var(--ok)}
+    .hm-wrap{overflow-x:auto;padding-bottom:10px}
+    .hm{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;gap:4px;height:140px}
+    .hm-dot{width:14px;height:14px;background:#2C2C2E;border-radius:4px}.hm-dot.active{background:var(--accent)}
+    .goal-card{background:var(--card);border-radius:16px;padding:20px;margin-bottom:12px}
+    .goal-header{display:flex;justify-content:space-between;margin-bottom:12px;align-items:flex-start}
+    .goal-title{font-size:18px;font-weight:600;margin-bottom:4px}.goal-date{font-size:13px;color:var(--txt2)}
+    .prog-track{background:#2C2C2E;height:10px;border-radius:5px;overflow:hidden;margin-top:12px}
+    .prog-bar{height:100%;background:var(--accent);border-radius:5px;transition:width .3s ease}
+    .goal-cl{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+    .goal-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid #2C2C2E;font-size:15px}.goal-row:last-child{border-bottom:none}
+    .goal-chk{width:24px;height:24px;border-radius:50%;border:2px solid #48484A;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s ease;flex-shrink:0}
+    .goal-chk.checked{background:var(--accent);border-color:var(--accent)}.goal-chk.checked::after{content:'\2713';font-size:14px;color:#fff;font-weight:800}
+    .goal-lbl{color:var(--txt2);font-size:14px}.goal-lbl.checked{color:#fff;text-decoration:line-through;text-decoration-color:#48484A}
+    .goal-acts{display:flex;gap:10px;margin-top:14px;justify-content:flex-end}
+    .goal-btn{background:#3A3A3C;color:#fff;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none}.goal-btn.danger{background:rgba(255,69,58,.15);color:var(--danger)}
+    .bnav{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(28,28,30,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:35px;padding:6px 8px;display:flex;gap:12px;box-shadow:0 10px 40px rgba(0,0,0,.6);z-index:1000;border:.5px solid rgba(255,255,255,.15)}
+    .bnav-item{width:50px;height:50px;border-radius:25px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#8E8E93;cursor:pointer;transition:all .2s ease}.bnav-item.active{background:#3A3A3C;color:#fff}
+    .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:2000;display:none;flex-direction:column;animation:slideUp .25s cubic-bezier(.16,1,.3,1)}.modal.active{display:flex}
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .mhdr{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;background:#1C1C1E;border-bottom:.5px solid #2C2C2E}
+    .mcontent{padding:20px;flex:1;overflow-y:auto}
+    .mact{color:var(--accent);font-size:17px;cursor:pointer}.mact.danger{color:var(--danger)}
+    .fgroup{background:#2C2C2E;border-radius:12px;padding:0 16px;margin-bottom:24px}
+    .frow{display:flex;align-items:center;padding:16px 0;border-bottom:.5px solid var(--sep)}.frow:last-child{border-bottom:none}
+    .finput{background:transparent;border:none;color:#fff;font-size:17px;flex:1;margin-left:12px;outline:none}
+    select:focus,input:focus{outline:none}
+    .detail-view{position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:1500;display:none;flex-direction:column;animation:slideR .3s cubic-bezier(.16,1,.3,1)}.detail-view.active{display:flex}
+    @keyframes slideR{from{transform:translateX(100%)}to{transform:translateX(0)}}
+    #auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center}
+    #auth-screen h1{font-size:40px;font-weight:800;margin-bottom:8px}
+    #auth-screen p{color:var(--txt2);font-size:16px;margin-bottom:40px}
+    .auth-form{width:100%;max-width:360px}
+    .auth-form input[type="email"]{width:100%;background:#2C2C2E;border:1px solid var(--sep);border-radius:12px;padding:16px;color:#fff;font-size:17px;margin-bottom:16px;outline:none}
+    .auth-form input[type="email"]:focus{border-color:var(--accent)}
+    .auth-form button{width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:16px;font-size:17px;font-weight:600;cursor:pointer}
+    .auth-form button:disabled{opacity:.5;cursor:not-allowed}
+    .auth-msg{margin-top:20px;padding:16px;border-radius:12px;font-size:15px;display:none}
+    .auth-msg.success{display:block;background:rgba(48,209,88,.1);color:var(--ok)}
+    .auth-msg.error{display:block;background:rgba(255,69,58,.1);color:var(--danger)}
+    .user-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 20px;font-size:13px;color:var(--txt2)}
+    .user-bar a{color:var(--danger);cursor:pointer;text-decoration:none;font-weight:600}
+    .loading-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;font-size:18px;color:var(--txt2)}
   </style>
 </head>
 <body>
-
-  <div id="view-habits" class="view-section active">
-    <div class="top-bar">
-      <div class="app-title">Habits</div>
-      <div class="top-actions">
-        <div class="date-selector-container">
-          <div class="date-selector" onclick="toggleDateDropdown()">
-            <span id="current-date-display">Today</span> <span style="font-size:12px; opacity:0.7;">▼</span>
+  <div id="loading-screen" class="loading-screen">Loading...</div>
+  <div id="auth-screen" style="display:none;">
+    <h1>Habits</h1>
+    <p>Sign in to sync your habits across devices</p>
+    <div class="auth-form">
+      <input type="email" id="auth-email" placeholder="Your email address" />
+      <button id="auth-btn" onclick="sendMagicLink()">Send Magic Link</button>
+      <div class="auth-msg" id="auth-msg"></div>
+    </div>
+  </div>
+  <div id="app-container" style="display:none;">
+    <div class="user-bar" id="user-bar"><span id="user-email"></span><a onclick="signOut()">Sign Out</a></div>
+    <div id="view-habits" class="view-section active">
+      <div class="top-bar">
+        <div class="app-title">Habits</div>
+        <div class="top-actions">
+          <div class="date-sel-wrap">
+            <div class="date-sel" onclick="toggleDateDropdown()"><span id="current-date-display">Today</span> <span style="font-size:12px;opacity:.7">▼</span></div>
+            <div class="date-dd" id="date-dropdown">
+              <div class="date-opt" onclick="changeDate(-1)">Yesterday</div>
+              <div class="date-opt selected" onclick="changeDate(0)">Today</div>
+              <div class="date-opt" onclick="changeDate(1)">Tomorrow</div>
+            </div>
           </div>
-          <div class="date-dropdown" id="date-dropdown">
-            <div class="date-option" onclick="changeDate(-1)">Yesterday</div>
-            <div class="date-option selected" onclick="changeDate(0)">Today</div>
-            <div class="date-option" onclick="changeDate(1)">Tomorrow</div>
-            <div style="height:1px; background:#38383A; margin:8px 0;"></div>
-            <div class="date-option" style="color:var(--accent-color)">Pick a Date...</div>
-          </div>
+          <div class="icon-btn" onclick="openAddModal()">+</div>
         </div>
-        <div class="icon-btn" onclick="openAddModal()">+</div>
+      </div>
+      <div class="habit-list" id="habits-container"></div>
+    </div>
+    <div id="view-stats" class="view-section stats-container">
+      <div class="app-title" style="margin-bottom:20px">Statistics</div>
+      <div class="stats-card">
+        <div class="gauge-wrap"><div class="gauge-bg"></div><div class="gauge-fill" id="gauge-fill"></div></div>
+        <div class="gauge-main" id="stats-percentage">0%</div>
+        <div class="gauge-sub">Weekly Completion</div>
+      </div>
+      <div class="grid-2">
+        <div class="stat-box"><div class="stat-label">Habit Accuracy</div><div class="stat-val" id="stats-accuracy">0%</div></div>
+        <div class="stat-box"><div class="stat-label">Consistency</div><div class="stat-val" style="color:var(--accent)" id="stats-consistency">0%</div></div>
+      </div>
+      <div class="stats-card" style="text-align:left">
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px"><span style="font-weight:600">Activity Log</span><span style="color:var(--txt2);font-size:13px">Last 10 Weeks</span></div>
+        <div class="hm-wrap"><div class="hm" id="heat-map"></div></div>
       </div>
     </div>
-    <div class="habit-list" id="habits-container"></div>
-  </div>
-
-  <div id="view-stats" class="view-section stats-container">
-    <div class="app-title" style="margin-bottom: 20px;">Statistics</div>
-    <div class="stats-card-large">
-      <div class="gauge-wrapper">
-        <div class="gauge-arc-bg"></div>
-        <div class="gauge-arc-fill" id="gauge-fill"></div>
-      </div>
-      <div class="gauge-label-main" id="stats-percentage">0%</div>
-      <div class="gauge-label-sub">Weekly Completion</div>
+    <div id="view-goals" class="view-section" style="padding:20px">
+      <div class="top-bar" style="padding:0 0 20px 0"><div class="app-title">Goals</div><div class="icon-btn" onclick="openGoalModal()">+</div></div>
+      <div id="goals-container"></div>
     </div>
-    <div class="grid-2">
-      <div class="stat-box">
-        <div class="stat-label">Habit Accuracy</div>
-        <div class="stat-value" id="stats-accuracy">0%</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Consistency</div>
-        <div class="stat-value" style="color: var(--accent-color);" id="stats-consistency">0%</div>
-      </div>
+    <div class="bnav">
+      <div class="bnav-item active" onclick="switchView('habits',this)">📅</div>
+      <div class="bnav-item" onclick="switchView('stats',this)">📊</div>
+      <div class="bnav-item" onclick="switchView('goals',this)">🎯</div>
     </div>
-    <div class="stats-card-large" style="text-align: left;">
-      <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
-        <span style="font-weight:600;">Activity Log</span>
-        <span style="color:var(--text-secondary); font-size:13px;">Last 10 Weeks</span>
-      </div>
-      <div class="heat-map-container">
-        <div class="heat-map" id="heat-map"></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="view-goals" class="view-section" style="padding: 20px;">
-    <div class="top-bar" style="padding: 0 0 20px 0;">
-      <div class="app-title">Goals</div>
-      <div class="icon-btn" onclick="openGoalModal()">+</div>
-    </div>
-    <div id="goals-container">
-      <div style="color:#8E8E93; text-align:center; margin-top:40px;">No goals yet. Tap + to add one.</div>
-    </div>
-  </div>
-
-  <div class="bottom-nav">
-    <div class="nav-item active" onclick="switchView('habits', this)">📅</div>
-    <div class="nav-item" onclick="switchView('stats', this)">📊</div>
-    <div class="nav-item" onclick="switchView('goals', this)">🎯</div>
   </div>
 
   <div id="modal-habit" class="modal">
-    <div class="modal-header">
-      <div class="modal-action" onclick="closeModal('habit')">Cancel</div>
-      <div class="modal-title" id="habit-modal-title">New Habit</div>
-      <div class="modal-action" style="font-weight:600;" onclick="saveHabit()">Save</div>
+    <div class="mhdr">
+      <div class="mact" onclick="closeModal('habit')">Cancel</div>
+      <div id="habit-modal-title">New Habit</div>
+      <div class="mact" style="font-weight:600" onclick="saveHabit()">Save</div>
     </div>
-    <div class="modal-content">
-      <div class="form-group">
-        <div class="form-row">
-          <span>✏️</span>
-          <input type="text" id="habit-name" class="form-input" placeholder="Name" />
-        </div>
-        <div class="form-row">
-          <span>📄</span>
-          <input type="text" id="habit-desc" class="form-input" placeholder="Description (e.g. 5 pages)" />
-        </div>
+    <div class="mcontent">
+      <div class="fgroup">
+        <div class="frow"><span>✏️</span><input type="text" id="habit-name" class="finput" placeholder="Name" /></div>
+        <div class="frow"><span>📄</span><input type="text" id="habit-desc" class="finput" placeholder="Description (e.g. 5 pages)" /></div>
       </div>
-      <div class="form-group">
-        <div class="form-row" style="justify-content: space-between;">
-          <span>Icon</span>
-          <input type="text" id="habit-icon" class="form-input" value="📚" style="text-align:right; width:50px;" />
-        </div>
-        <div class="form-row" style="justify-content: space-between;">
-          <span>Color</span>
-          <select id="habit-color" style="background:none; border:none; color:white; text-align:right; font-size:16px;">
-            <option value="#0A84FF">Blue</option>
-            <option value="#FF453A">Red</option>
-            <option value="#30D158">Green</option>
-            <option value="#FF9F0A">Orange</option>
-            <option value="#BF5AF2">Purple</option>
-            <option value="#FFD60A">Yellow</option>
-          </select>
-        </div>
-        <div class="form-row" style="justify-content: space-between;">
-          <span>Frequency</span>
-          <select id="habit-frequency" style="background:none; border:none; color:white; text-align:right; font-size:16px;">
-            <option value="7">Every day (7/week)</option>
-            <option value="6">6 times / week</option>
-            <option value="5">5 times / week</option>
-            <option value="4">4 times / week</option>
-            <option value="3">3 times / week</option>
-            <option value="2">2 times / week</option>
-            <option value="1">1 time / week</option>
-          </select>
-        </div>
+      <div class="fgroup">
+        <div class="frow" style="justify-content:space-between"><span>Icon</span><input type="text" id="habit-icon" class="finput" value="📚" style="text-align:right;width:50px" /></div>
+        <div class="frow" style="justify-content:space-between"><span>Color</span>
+          <select id="habit-color" style="background:none;border:none;color:#fff;text-align:right;font-size:16px">
+            <option value="#0A84FF">Blue</option><option value="#FF453A">Red</option><option value="#30D158">Green</option>
+            <option value="#FF9F0A">Orange</option><option value="#BF5AF2">Purple</option><option value="#FFD60A">Yellow</option>
+          </select></div>
+        <div class="frow" style="justify-content:space-between"><span>Frequency</span>
+          <select id="habit-frequency" style="background:none;border:none;color:#fff;text-align:right;font-size:16px">
+            <option value="7">Every day (7/week)</option><option value="6">6 times / week</option><option value="5">5 times / week</option>
+            <option value="4">4 times / week</option><option value="3">3 times / week</option><option value="2">2 times / week</option><option value="1">1 time / week</option>
+          </select></div>
       </div>
-      <div class="form-group" id="delete-section" style="display:none; margin-top:30px; background:rgba(255,69,58,0.1);">
-        <div class="form-row" style="justify-content: center; border:none;">
-          <span class="modal-action danger" onclick="deleteHabit()" style="width:100%; text-align:center; padding:4px;">Delete Habit</span>
-        </div>
+      <div class="fgroup" id="delete-section" style="display:none;margin-top:30px;background:rgba(255,69,58,.1)">
+        <div class="frow" style="justify-content:center;border:none"><span class="mact danger" onclick="deleteHabit()" style="width:100%;text-align:center;padding:4px">Delete Habit</span></div>
       </div>
     </div>
   </div>
 
   <div id="modal-goal" class="modal">
-    <div class="modal-header">
-      <div class="modal-action" onclick="closeModal('goal')">Cancel</div>
-      <div class="modal-title" id="goal-modal-title">New Goal</div>
-      <div class="modal-action" style="font-weight:600;" onclick="saveGoal()">Save</div>
+    <div class="mhdr">
+      <div class="mact" onclick="closeModal('goal')">Cancel</div>
+      <div id="goal-modal-title">New Goal</div>
+      <div class="mact" style="font-weight:600" onclick="saveGoal()">Save</div>
     </div>
-    <div class="modal-content">
-      <div class="form-group">
-        <div class="form-row">
-          <span>🎯</span>
-          <input type="text" id="goal-title" class="form-input" placeholder="Goal Title" />
-        </div>
-        <div class="form-row">
-          <span>📅</span>
-          <input type="date" id="goal-date" class="form-input" style="color-scheme: dark;" />
-        </div>
+    <div class="mcontent">
+      <div class="fgroup">
+        <div class="frow"><span>🎯</span><input type="text" id="goal-title" class="finput" placeholder="Goal Title" /></div>
+        <div class="frow"><span>📅</span><input type="date" id="goal-date" class="finput" style="color-scheme:dark" /></div>
       </div>
-      <div class="form-group" id="goal-delete-section" style="display:none; margin-top:30px; background:rgba(255,69,58,0.1);">
-        <div class="form-row" style="justify-content: center; border:none;">
-          <span class="modal-action danger" onclick="deleteGoal()" style="width:100%; text-align:center; padding:4px;">Delete Goal</span>
-        </div>
+      <div class="fgroup" id="goal-delete-section" style="display:none;margin-top:30px;background:rgba(255,69,58,.1)">
+        <div class="frow" style="justify-content:center;border:none"><span class="mact danger" onclick="deleteGoal()" style="width:100%;text-align:center;padding:4px">Delete Goal</span></div>
       </div>
     </div>
   </div>
 
-  <div id="view-habit-detail" class="habit-detail-view">
-    <div class="modal-header">
-      <div class="modal-action" onclick="closeHabitDetail()">← Back</div>
-      <div class="modal-title" id="detail-title">Habit Details</div>
-      <div class="modal-action" onclick="editCurrentHabit()">Edit</div>
+  <div id="view-habit-detail" class="detail-view">
+    <div class="mhdr">
+      <div class="mact" onclick="closeHabitDetail()">← Back</div>
+      <div id="detail-title">Habit Details</div>
+      <div class="mact" onclick="editCurrentHabit()">Edit</div>
     </div>
-    <div class="modal-content">
-      <div class="stats-card-large" style="padding: 30px;">
-        <div style="font-size: 50px; margin-bottom: 16px;" id="detail-icon">📚</div>
-        <div style="font-size: 28px; font-weight: 700;" id="detail-name">Reading</div>
-        <div style="color: var(--text-secondary); margin-top: 6px; font-size: 16px;" id="detail-desc">5 pages</div>
-        <div style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;" id="detail-freq"></div>
+    <div class="mcontent">
+      <div class="stats-card" style="padding:30px">
+        <div style="font-size:50px;margin-bottom:16px" id="detail-icon">📚</div>
+        <div style="font-size:28px;font-weight:700" id="detail-name">Reading</div>
+        <div style="color:var(--txt2);margin-top:6px;font-size:16px" id="detail-desc">5 pages</div>
+        <div style="color:var(--txt2);margin-top:8px;font-size:14px" id="detail-freq"></div>
       </div>
       <div class="grid-2">
-        <div class="stat-box">
-          <div class="stat-label">Current Streak</div>
-          <div class="stat-value" id="detail-streak">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Total Completions</div>
-          <div class="stat-value" style="color: var(--accent-color);" id="detail-total">0</div>
-        </div>
+        <div class="stat-box"><div class="stat-label">Current Streak</div><div class="stat-val" id="detail-streak">0</div></div>
+        <div class="stat-box"><div class="stat-label">Total Completions</div><div class="stat-val" style="color:var(--accent)" id="detail-total">0</div></div>
       </div>
-      <div class="stats-card-large" style="text-align: left;">
-        <div style="font-weight:600; margin-bottom:12px;">History</div>
-        <div class="heat-map-container">
-          <div class="heat-map" id="detail-heatmap" style="grid-template-rows: repeat(7, 1fr);"></div>
-        </div>
-      </div>
+      <div class="stats-card" style="text-align:left"><div style="font-weight:600;margin-bottom:12px">History</div><div class="hm-wrap"><div class="hm" id="detail-heatmap"></div></div></div>
     </div>
   </div>
 
   <script>
-    var habits = [
-      { id: 1, name: "Reading", desc: "5 pages", icon: "📚", color: "#FF453A", frequency: 7, completions: [] },
-      { id: 2, name: "Drink Water", desc: "3000 ml", icon: "💧", color: "#0A84FF", frequency: 7, completions: [] },
-      { id: 3, name: "Exercise", desc: "60 mins", icon: "🏋️", color: "#FF9F0A", frequency: 7, completions: [] }
-    ];
-    var goals = [];
-    var selectedDate = new Date();
-    var currentHabitId = null;
-    var currentGoalId = null;
+    var sb=supabase.createClient('https://dssywydywiqukaagisce.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzc3l3eWR5d2lxdWthYWdpc2NlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3ODQzMjksImV4cCI6MjA4NjM2MDMyOX0.nGzvYHRWGKWPWc8wsjt19Xfx9btCZkyrz-YueksnLkI');
+    var currentUser=null,habits=[],completions=[],goals=[],goalDays=[];
+    var selectedDate=new Date(),currentHabitId=null,currentGoalId=null;
 
-    function localDateStr(d) {
-      var y = d.getFullYear();
-      var m = String(d.getMonth() + 1).padStart(2, '0');
-      var day = String(d.getDate()).padStart(2, '0');
-      return y + '-' + m + '-' + day;
+    function ld(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+    function getMon(d){var dt=new Date(d.getFullYear(),d.getMonth(),d.getDate());var day=dt.getDay();dt.setDate(dt.getDate()+(day===0?-6:1-day));return dt}
+    function elapsed(d){var m=getMon(d),t=new Date(),td=new Date(t.getFullYear(),t.getMonth(),t.getDate()),e=new Date(m);e.setDate(e.getDate()+6);var end=td<e?td:e;return Math.max(1,Math.min(7,Math.round((end-m)/864e5)+1))}
+    function wkCount(hid,d){var m=getMon(d),s=new Date(m);s.setDate(s.getDate()+6);var ms=ld(m),ss=ld(s);return completions.filter(function(c){return c.habit_id===hid&&c.day>=ms&&c.day<=ss}).length}
+    function isDone(hid,ds){return completions.some(function(c){return c.habit_id===hid&&c.day===ds})}
+
+    async function checkAuth(){var{data:{session}}=await sb.auth.getSession();if(session){currentUser=session.user;showApp()}else{document.getElementById('loading-screen').style.display='none';document.getElementById('auth-screen').style.display='flex'}}
+    sb.auth.onAuthStateChange(function(ev,session){if(ev==='SIGNED_IN'&&session){currentUser=session.user;showApp()}});
+
+    async function sendMagicLink(){
+      var email=document.getElementById('auth-email').value.trim();if(!email)return;
+      var btn=document.getElementById('auth-btn'),msg=document.getElementById('auth-msg');
+      btn.disabled=true;btn.textContent='Sending...';msg.className='auth-msg';msg.style.display='none';
+      var{error}=await sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:'https://hvq75wr88g-lab.github.io/habit-tracker/'}});
+      if(error){msg.className='auth-msg error';msg.textContent=error.message;msg.style.display='block'}
+      else{msg.className='auth-msg success';msg.textContent='Check your email! Click the link to sign in.';msg.style.display='block'}
+      btn.disabled=false;btn.textContent='Send Magic Link';
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-      renderHabits(); renderStats(); renderGoals(); updateDateDisplay();
-    });
+    async function signOut(){await sb.auth.signOut();currentUser=null;habits=[];completions=[];goals=[];goalDays=[];document.getElementById('app-container').style.display='none';document.getElementById('auth-screen').style.display='flex'}
 
-    // ===================== WEEK HELPERS =====================
-    function getMonday(d) {
-      var dt = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      var day = dt.getDay();
-      var diff = day === 0 ? -6 : 1 - day;
-      dt.setDate(dt.getDate() + diff);
-      return dt;
+    async function showApp(){
+      document.getElementById('loading-screen').style.display='none';document.getElementById('auth-screen').style.display='none';
+      document.getElementById('app-container').style.display='block';document.getElementById('user-email').textContent=currentUser.email;
+      await loadAll();renderHabits();renderStats();renderGoals();updateDateDisplay();
     }
 
-    // Count how many days from Monday to today (or end of week if past)
-    function daysElapsedInWeek(d) {
-      var mon = getMonday(d);
-      var today = new Date();
-      today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      var endOfWeek = new Date(mon);
-      endOfWeek.setDate(endOfWeek.getDate() + 6);
-      // Use the earlier of today or Sunday as the "end"
-      var end = today < endOfWeek ? today : endOfWeek;
-      var diff = Math.round((end - mon) / 86400000) + 1;
-      return Math.max(1, Math.min(7, diff));
+    async function loadAll(){
+      var uid=currentUser.id;
+      var[hR,cR,gR,gdR]=await Promise.all([
+        sb.from('habits').select('*').eq('user_id',uid).order('created_at'),
+        sb.from('completions').select('habit_id,day').eq('user_id',uid),
+        sb.from('goals').select('*').eq('user_id',uid).order('created_at'),
+        sb.from('goal_days').select('goal_id,day').eq('user_id',uid)
+      ]);
+      habits=(hR.data||[]).map(function(h){return{id:h.id,name:h.name,desc:h.description||'',icon:h.icon||'📚',color:h.color||'#0A84FF',frequency:h.frequency||7}});
+      completions=(cR.data||[]).map(function(c){return{habit_id:c.habit_id,day:c.day}});
+      goals=(gR.data||[]).map(function(g){return{id:g.id,title:g.title,date:g.target_date,startDate:g.start_date}});
+      goalDays=(gdR.data||[]).map(function(d){return{goal_id:d.goal_id,day:d.day}});
     }
 
-    function weekCompletions(habit, d) {
-      var mon = getMonday(d);
-      var sun = new Date(mon);
-      sun.setDate(sun.getDate() + 6);
-      sun.setHours(23,59,59,999);
-      var count = 0;
-      for (var i = 0; i < habit.completions.length; i++) {
-        var cd = new Date(habit.completions[i]);
-        if (cd >= mon && cd <= sun) count++;
-      }
-      return count;
-    }
-
-    // ===================== HABITS =====================
-    function renderHabits() {
-      var container = document.getElementById('habits-container');
-      container.innerHTML = '';
-      var dateKey = selectedDate.toDateString();
-
-      habits.forEach(function(habit) {
-        var isCompleted = habit.completions.indexOf(dateKey) !== -1;
-        var weekCount = weekCompletions(habit, selectedDate);
-        var weekTarget = habit.frequency || 7;
-        var weekMet = weekCount >= weekTarget;
-
-        var div = document.createElement('div');
-        div.className = 'habit-card';
-        div.innerHTML =
-          '<div class="habit-left" onclick="openHabitDetail(' + habit.id + ')">' +
-            '<div class="habit-icon">' + habit.icon + '</div>' +
-            '<div class="habit-details">' +
-              '<div class="habit-name">' + habit.name + '</div>' +
-              '<div class="habit-meta">' + habit.desc +
-                (weekTarget < 7 ? ' <span class="week-badge ' + (weekMet ? 'complete' : '') + '">' + weekCount + '/' + weekTarget + ' this week</span>' : '') +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="check-circle ' + (isCompleted ? 'completed' : '') + '"' +
-               ' onclick="toggleHabit(' + habit.id + ')"' +
-               ' style="' + (isCompleted ? 'background-color:' + habit.color + '; border-color:' + habit.color : '') + '">' +
-          '</div>';
-        container.appendChild(div);
+    function renderHabits(){
+      var c=document.getElementById('habits-container');c.innerHTML='';var ds=ld(selectedDate);
+      habits.forEach(function(h){
+        var done=isDone(h.id,ds),wc=wkCount(h.id,selectedDate),wt=h.frequency||7,wm=wc>=wt;
+        var d=document.createElement('div');d.className='habit-card';
+        d.innerHTML='<div class="habit-left" onclick="openHabitDetail('+h.id+')"><div class="habit-icon">'+h.icon+'</div><div class="habit-details"><div class="habit-name">'+h.name+'</div><div class="habit-meta">'+h.desc+(wt<7?' <span class="wk-badge '+(wm?'complete':'')+'">'+wc+'/'+wt+' this week</span>':'')+'</div></div></div><div class="chk '+(done?'done':'')+'" onclick="toggleHabit('+h.id+')" style="'+(done?'background-color:'+h.color+';border-color:'+h.color:'')+'"></div>';
+        c.appendChild(d);
       });
     }
 
-    function toggleHabit(id) {
-      var habit = habits.find(function(h) { return h.id === id; });
-      var dateKey = selectedDate.toDateString();
-      if (habit.completions.indexOf(dateKey) !== -1) {
-        habit.completions = habit.completions.filter(function(d) { return d !== dateKey; });
-      } else {
-        habit.completions.push(dateKey);
-        if (navigator.vibrate) navigator.vibrate(10);
-      }
-      renderHabits(); renderStats();
+    async function toggleHabit(id){
+      var ds=ld(selectedDate),ex=completions.find(function(c){return c.habit_id===id&&c.day===ds});
+      if(ex){await sb.from('completions').delete().eq('user_id',currentUser.id).eq('habit_id',id).eq('day',ds);completions=completions.filter(function(c){return!(c.habit_id===id&&c.day===ds)})}
+      else{await sb.from('completions').insert({user_id:currentUser.id,habit_id:id,day:ds});completions.push({habit_id:id,day:ds});if(navigator.vibrate)navigator.vibrate(10)}
+      renderHabits();renderStats();
     }
 
-    // ===================== DATE =====================
-    function toggleDateDropdown() {
-      document.getElementById('date-dropdown').classList.toggle('active');
+    function toggleDateDropdown(){document.getElementById('date-dropdown').classList.toggle('active')}
+    function changeDate(o){selectedDate.setDate(selectedDate.getDate()+o);updateDateDisplay();document.getElementById('date-dropdown').classList.remove('active');renderHabits()}
+    function updateDateDisplay(){var t=new Date(),l=selectedDate.toLocaleDateString();if(selectedDate.toDateString()===t.toDateString())l="Today";else if(selectedDate.getDate()===t.getDate()-1&&selectedDate.getMonth()===t.getMonth())l="Yesterday";else if(selectedDate.getDate()===t.getDate()+1&&selectedDate.getMonth()===t.getMonth())l="Tomorrow";document.getElementById('current-date-display').textContent=l}
+
+    function openAddModal(){currentHabitId=null;document.getElementById('habit-modal-title').textContent="New Habit";document.getElementById('habit-name').value="";document.getElementById('habit-desc').value="";document.getElementById('habit-icon').value="📚";document.getElementById('habit-color').value="#0A84FF";document.getElementById('habit-frequency').value="7";document.getElementById('delete-section').style.display='none';document.getElementById('modal-habit').classList.add('active')}
+
+    function editCurrentHabit(){var h=habits.find(function(h){return h.id===currentHabitId});document.getElementById('habit-modal-title').textContent="Edit Habit";document.getElementById('habit-name').value=h.name;document.getElementById('habit-desc').value=h.desc;document.getElementById('habit-icon').value=h.icon;document.getElementById('habit-color').value=h.color;document.getElementById('habit-frequency').value=String(h.frequency||7);document.getElementById('delete-section').style.display='block';closeHabitDetail();document.getElementById('modal-habit').classList.add('active')}
+
+    async function saveHabit(){
+      var nm=document.getElementById('habit-name').value,ds=document.getElementById('habit-desc').value,ic=document.getElementById('habit-icon').value,cl=document.getElementById('habit-color').value,fr=parseInt(document.getElementById('habit-frequency').value);
+      if(!nm)return;
+      if(currentHabitId){await sb.from('habits').update({name:nm,description:ds,icon:ic,color:cl,frequency:fr}).eq('id',currentHabitId).eq('user_id',currentUser.id);var h=habits.find(function(h){return h.id===currentHabitId});h.name=nm;h.desc=ds;h.icon=ic;h.color=cl;h.frequency=fr}
+      else{var{data}=await sb.from('habits').insert({user_id:currentUser.id,name:nm,description:ds,icon:ic,color:cl,frequency:fr}).select();if(data&&data[0])habits.push({id:data[0].id,name:nm,desc:ds,icon:ic,color:cl,frequency:fr})}
+      closeModal('habit');renderHabits();renderStats();
     }
 
-    function changeDate(offset) {
-      selectedDate.setDate(selectedDate.getDate() + offset);
-      updateDateDisplay();
-      document.getElementById('date-dropdown').classList.remove('active');
-      renderHabits();
+    async function deleteHabit(){if(!confirm("Delete this habit?"))return;await sb.from('habits').delete().eq('id',currentHabitId).eq('user_id',currentUser.id);completions=completions.filter(function(c){return c.habit_id!==currentHabitId});habits=habits.filter(function(h){return h.id!==currentHabitId});closeModal('habit');renderHabits();renderStats()}
+    function closeModal(t){document.getElementById('modal-'+t).classList.remove('active')}
+
+    function openHabitDetail(id){
+      currentHabitId=id;var h=habits.find(function(h){return h.id===id});
+      document.getElementById('detail-name').textContent=h.name;document.getElementById('detail-desc').textContent=h.desc;document.getElementById('detail-icon').textContent=h.icon;
+      document.getElementById('detail-total').textContent=completions.filter(function(c){return c.habit_id===id}).length;
+      document.getElementById('detail-streak').textContent=calcStreak(h);
+      document.getElementById('detail-freq').textContent=(h.frequency||7)===7?"Every day":(h.frequency||7)+" times per week";
+      renderDetailHM(h);document.getElementById('view-habit-detail').classList.add('active');
+    }
+    function closeHabitDetail(){document.getElementById('view-habit-detail').classList.remove('active')}
+
+    function calcStreak(h){
+      var hc=completions.filter(function(c){return c.habit_id===h.id}).map(function(c){return c.day});
+      if(hc.length===0)return"0";var fr=h.frequency||7;
+      if(fr===7){var s=0,d=new Date();d.setHours(0,0,0,0);while(hc.indexOf(ld(d))!==-1){s++;d.setDate(d.getDate()-1)}return"🔥 "+s}
+      else{var s=0,cd=new Date();while(true){if(wkCount(h.id,cd)>=fr){s++;cd.setDate(cd.getDate()-7)}else break}return"🔥 "+s+(s===1?" week":" weeks")}
     }
 
-    function updateDateDisplay() {
-      var today = new Date();
-      var label = selectedDate.toLocaleDateString();
-      if (selectedDate.toDateString() === today.toDateString()) label = "Today";
-      else if (selectedDate.getDate() === today.getDate() - 1 && selectedDate.getMonth() === today.getMonth()) label = "Yesterday";
-      else if (selectedDate.getDate() === today.getDate() + 1 && selectedDate.getMonth() === today.getMonth()) label = "Tomorrow";
-      document.getElementById('current-date-display').textContent = label;
-      document.querySelectorAll('.date-option').forEach(function(el) { el.classList.remove('selected'); });
-      if (label === "Today") document.querySelectorAll('.date-option')[1].classList.add('selected');
+    function renderStats(){
+      var t=new Date(),tt=0,td=0;
+      habits.forEach(function(h){var fr=h.frequency||7,wc=wkCount(h.id,t);tt+=fr;td+=Math.min(wc,fr)});
+      var pct=tt===0?0:Math.round(td/tt*100);
+      document.getElementById('stats-percentage').textContent=pct+'%';
+      document.getElementById('gauge-fill').style.transform='rotate('+(-225+pct/100*180)+'deg)';
+      var hot=0,ts=ld(t);
+      habits.forEach(function(h){var fr=h.frequency||7;if(fr===7){if(isDone(h.id,ts))hot++}else{if(wkCount(h.id,t)>=fr)hot++}});
+      document.getElementById('stats-accuracy').textContent=(habits.length===0?0:Math.round(hot/habits.length*100))+'%';
+      var el=elapsed(t),mon=getMon(t),pd=0;
+      for(var d=0;d<el;d++){var cd=new Date(mon);cd.setDate(cd.getDate()+d);var ds=ld(cd),ok=true;for(var i=0;i<habits.length;i++){if((habits[i].frequency||7)===7&&!isDone(habits[i].id,ds)){ok=false;break}}if(ok)pd++}
+      document.getElementById('stats-consistency').textContent=(habits.length===0?0:Math.round(pd/el*100))+'%';
+      renderHM();
     }
 
-    // ===================== ADD / EDIT / DELETE HABIT =====================
-    function openAddModal() {
-      currentHabitId = null;
-      document.getElementById('habit-modal-title').textContent = "New Habit";
-      document.getElementById('habit-name').value = "";
-      document.getElementById('habit-desc').value = "";
-      document.getElementById('habit-icon').value = "📚";
-      document.getElementById('habit-color').value = "#0A84FF";
-      document.getElementById('habit-frequency').value = "7";
-      document.getElementById('delete-section').style.display = 'none';
-      document.getElementById('modal-habit').classList.add('active');
-    }
+    function renderHM(){var c=document.getElementById('heat-map');c.innerHTML='';for(var i=0;i<70;i++){var d=new Date();d.setDate(d.getDate()-(69-i));var ds=ld(d),dn=habits.filter(function(h){return isDone(h.id,ds)}).length;var dot=document.createElement('div');dot.className='hm-dot';if(dn>0&&dn>=habits.length/2)dot.classList.add('active');c.appendChild(dot)}}
+    function renderDetailHM(h){var c=document.getElementById('detail-heatmap');c.innerHTML='';for(var i=0;i<60;i++){var d=new Date();d.setDate(d.getDate()-(59-i));var dot=document.createElement('div');dot.className='hm-dot';if(isDone(h.id,ld(d)))dot.classList.add('active');c.appendChild(dot)}}
 
-    function editCurrentHabit() {
-      var habit = habits.find(function(h) { return h.id === currentHabitId; });
-      document.getElementById('habit-modal-title').textContent = "Edit Habit";
-      document.getElementById('habit-name').value = habit.name;
-      document.getElementById('habit-desc').value = habit.desc;
-      document.getElementById('habit-icon').value = habit.icon;
-      document.getElementById('habit-color').value = habit.color;
-      document.getElementById('habit-frequency').value = String(habit.frequency || 7);
-      document.getElementById('delete-section').style.display = 'block';
-      closeHabitDetail();
-      document.getElementById('modal-habit').classList.add('active');
-    }
-
-    function saveHabit() {
-      var name = document.getElementById('habit-name').value;
-      var desc = document.getElementById('habit-desc').value;
-      var icon = document.getElementById('habit-icon').value;
-      var color = document.getElementById('habit-color').value;
-      var frequency = parseInt(document.getElementById('habit-frequency').value);
-      if (!name) return;
-      if (currentHabitId) {
-        var habit = habits.find(function(h) { return h.id === currentHabitId; });
-        habit.name = name; habit.desc = desc; habit.icon = icon; habit.color = color; habit.frequency = frequency;
-      } else {
-        habits.push({ id: Date.now(), name: name, desc: desc, icon: icon, color: color, frequency: frequency, completions: [] });
-      }
-      closeModal('habit'); renderHabits(); renderStats();
-    }
-
-    function deleteHabit() {
-      if (confirm("Delete this habit?")) {
-        habits = habits.filter(function(h) { return h.id !== currentHabitId; });
-        closeModal('habit'); renderHabits(); renderStats();
-      }
-    }
-
-    function closeModal(type) {
-      document.getElementById('modal-' + type).classList.remove('active');
-    }
-
-    // ===================== HABIT DETAIL =====================
-    function openHabitDetail(id) {
-      currentHabitId = id;
-      var habit = habits.find(function(h) { return h.id === id; });
-      document.getElementById('detail-name').textContent = habit.name;
-      document.getElementById('detail-desc').textContent = habit.desc;
-      document.getElementById('detail-icon').textContent = habit.icon;
-      document.getElementById('detail-total').textContent = habit.completions.length;
-      document.getElementById('detail-streak').textContent = calculateStreak(habit);
-      var freq = habit.frequency || 7;
-      document.getElementById('detail-freq').textContent = freq === 7 ? "Every day" : freq + " times per week";
-      renderDetailHeatmap(habit);
-      document.getElementById('view-habit-detail').classList.add('active');
-    }
-
-    function closeHabitDetail() {
-      document.getElementById('view-habit-detail').classList.remove('active');
-    }
-
-    function calculateStreak(habit) {
-      if (habit.completions.length === 0) return "0";
-      var freq = habit.frequency || 7;
-      if (freq === 7) {
-        var streak = 0;
-        var d = new Date(); d.setHours(0,0,0,0);
-        while (habit.completions.indexOf(d.toDateString()) !== -1) {
-          streak++; d.setDate(d.getDate() - 1);
-        }
-        return "🔥 " + streak;
-      } else {
-        var streak = 0;
-        var checkDate = new Date();
-        while (true) {
-          if (weekCompletions(habit, checkDate) >= freq) {
-            streak++; checkDate.setDate(checkDate.getDate() - 7);
-          } else break;
-        }
-        return "🔥 " + streak + (streak === 1 ? " week" : " weeks");
-      }
-    }
-
-    // ===================== STATS =====================
-    function renderStats() {
-      var today = new Date();
-      var totalTarget = 0;
-      var totalDone = 0;
-      habits.forEach(function(h) {
-        var freq = h.frequency || 7;
-        var wc = weekCompletions(h, today);
-        totalTarget += freq;
-        totalDone += Math.min(wc, freq);
-      });
-
-      var pct = totalTarget === 0 ? 0 : Math.round((totalDone / totalTarget) * 100);
-      document.getElementById('stats-percentage').textContent = pct + '%';
-      var deg = -225 + ((pct / 100) * 180);
-      document.getElementById('gauge-fill').style.transform = 'rotate(' + deg + 'deg)';
-
-      // ACCURACY: daily habits = did you do it today? weekly = hit target this week?
-      var habitsOnTarget = 0;
-      habits.forEach(function(h) {
-        var freq = h.frequency || 7;
-        if (freq === 7) {
-          if (h.completions.indexOf(today.toDateString()) !== -1) habitsOnTarget++;
-        } else {
-          if (weekCompletions(h, today) >= freq) habitsOnTarget++;
-        }
-      });
-      var accuracy = habits.length === 0 ? 0 : Math.round((habitsOnTarget / habits.length) * 100);
-      document.getElementById('stats-accuracy').textContent = accuracy + '%';
-
-      // CONSISTENCY: of the days elapsed this week, what % did you show up?
-      // "Show up" = for each elapsed day, did you complete all daily habits that day
-      //             + for weekly habits, are you on track (completions >= expected so far)?
-      var elapsed = daysElapsedInWeek(today);
-      var mon = getMonday(today);
-      var perfectDays = 0;
-
-      for (var d = 0; d < elapsed; d++) {
-        var checkDay = new Date(mon);
-        checkDay.setDate(checkDay.getDate() + d);
-        var dayKey = checkDay.toDateString();
-        var allDailyDone = true;
-        for (var i = 0; i < habits.length; i++) {
-          if ((habits[i].frequency || 7) === 7) {
-            if (habits[i].completions.indexOf(dayKey) === -1) {
-              allDailyDone = false; break;
-            }
-          }
-        }
-        if (allDailyDone) perfectDays++;
-      }
-
-      // Also check weekly habits are on pace
-      var weeklyOnTrack = true;
-      habits.forEach(function(h) {
-        var freq = h.frequency || 7;
-        if (freq < 7) {
-          // Expected by now: (freq/7) * elapsed days, rounded down
-          var expected = Math.floor((freq / 7) * elapsed);
-          if (weekCompletions(h, today) < expected) weeklyOnTrack = false;
-        }
-      });
-
-      var consistency;
-      if (habits.length === 0) {
-        consistency = 0;
-      } else {
-        var dailyConsistency = Math.round((perfectDays / elapsed) * 100);
-        // Blend: if weekly habits are off track, cap at 75%
-        consistency = weeklyOnTrack ? dailyConsistency : Math.min(dailyConsistency, 75);
-      }
-      document.getElementById('stats-consistency').textContent = consistency + '%';
-
-      renderHeatmap();
-    }
-
-    function renderHeatmap() {
-      var container = document.getElementById('heat-map');
-      container.innerHTML = '';
-      for (var i = 0; i < 70; i++) {
-        var d = new Date(); d.setDate(d.getDate() - (69 - i));
-        var dateKey = d.toDateString();
-        var done = habits.filter(function(h) { return h.completions.indexOf(dateKey) !== -1; }).length;
-        var active = done > 0 && done >= habits.length / 2;
-        var dot = document.createElement('div');
-        dot.className = 'heat-dot';
-        if (active) dot.classList.add('active');
-        container.appendChild(dot);
-      }
-    }
-
-    function renderDetailHeatmap(habit) {
-      var container = document.getElementById('detail-heatmap');
-      container.innerHTML = '';
-      for (var i = 0; i < 60; i++) {
-        var d = new Date(); d.setDate(d.getDate() - (59 - i));
-        var active = habit.completions.indexOf(d.toDateString()) !== -1;
-        var dot = document.createElement('div');
-        dot.className = 'heat-dot';
-        if (active) dot.classList.add('active');
-        container.appendChild(dot);
-      }
-    }
-
-    // ===================== GOALS =====================
-    function openGoalModal(editId) {
-      currentGoalId = editId || null;
-      if (currentGoalId) {
-        var goal = goals.find(function(g) { return g.id === currentGoalId; });
-        document.getElementById('goal-modal-title').textContent = "Edit Goal";
-        document.getElementById('goal-title').value = goal.title;
-        document.getElementById('goal-date').value = goal.date || '';
-        document.getElementById('goal-delete-section').style.display = 'block';
-      } else {
-        document.getElementById('goal-modal-title').textContent = "New Goal";
-        document.getElementById('goal-title').value = '';
-        document.getElementById('goal-date').value = '';
-        document.getElementById('goal-delete-section').style.display = 'none';
-      }
+    function openGoalModal(eid){
+      currentGoalId=eid||null;
+      if(currentGoalId){var g=goals.find(function(g){return g.id===currentGoalId});document.getElementById('goal-modal-title').textContent="Edit Goal";document.getElementById('goal-title').value=g.title;document.getElementById('goal-date').value=g.date;document.getElementById('goal-delete-section').style.display='block'}
+      else{document.getElementById('goal-modal-title').textContent="New Goal";document.getElementById('goal-title').value='';document.getElementById('goal-date').value='';document.getElementById('goal-delete-section').style.display='none'}
       document.getElementById('modal-goal').classList.add('active');
     }
 
-    function saveGoal() {
-      var title = document.getElementById('goal-title').value;
-      var date = document.getElementById('goal-date').value;
-      if (!title || !date) return;
-      if (currentGoalId) {
-        var goal = goals.find(function(g) { return g.id === currentGoalId; });
-        goal.title = title; goal.date = date;
-        goal.checkDays = buildCheckDays(goal.startDate, date);
-        var validDays = new Set(goal.checkDays);
-        goal.checked = (goal.checked || []).filter(function(d) { return validDays.has(d); });
-      } else {
-        var startDate = localDateStr(new Date());
-        goals.push({
-          id: Date.now(), title: title, date: date, startDate: startDate,
-          checkDays: buildCheckDays(startDate, date), checked: []
-        });
-      }
-      renderGoals(); closeModal('goal');
+    async function saveGoal(){
+      var ti=document.getElementById('goal-title').value,dt=document.getElementById('goal-date').value;if(!ti||!dt)return;
+      if(currentGoalId){await sb.from('goals').update({title:ti,target_date:dt}).eq('id',currentGoalId).eq('user_id',currentUser.id);var g=goals.find(function(g){return g.id===currentGoalId});g.title=ti;g.date=dt}
+      else{var sd=ld(new Date());var{data}=await sb.from('goals').insert({user_id:currentUser.id,title:ti,target_date:dt,start_date:sd}).select();if(data&&data[0])goals.push({id:data[0].id,title:ti,date:dt,startDate:sd})}
+      renderGoals();closeModal('goal');
     }
 
-    function deleteGoal() {
-      if (confirm("Delete this goal?")) {
-        goals = goals.filter(function(g) { return g.id !== currentGoalId; });
-        closeModal('goal'); renderGoals();
-      }
-    }
+    async function deleteGoal(){if(!confirm("Delete this goal?"))return;await sb.from('goals').delete().eq('id',currentGoalId).eq('user_id',currentUser.id);goalDays=goalDays.filter(function(d){return d.goal_id!==currentGoalId});goals=goals.filter(function(g){return g.id!==currentGoalId});closeModal('goal');renderGoals()}
 
-    function buildCheckDays(startStr, endStr) {
-      var days = [];
-      var start = new Date(startStr + 'T12:00:00');
-      var end = new Date(endStr + 'T12:00:00');
-      var d = new Date(start);
-      while (d <= end) {
-        days.push(localDateStr(d));
-        d.setDate(d.getDate() + 1);
-      }
-      return days;
-    }
+    function buildDays(s,e){var days=[],d=new Date(s+'T12:00:00'),end=new Date(e+'T12:00:00');while(d<=end){days.push(ld(d));d.setDate(d.getDate()+1)}return days}
 
-    function toggleGoalDay(goalId, day) {
-      var goal = goals.find(function(g) { return g.id === goalId; });
-      if (goal.checked.indexOf(day) !== -1) {
-        goal.checked = goal.checked.filter(function(d) { return d !== day; });
-      } else {
-        goal.checked.push(day);
-      }
+    async function toggleGoalDay(gid,day){
+      var ex=goalDays.find(function(d){return d.goal_id===gid&&d.day===day});
+      if(ex){await sb.from('goal_days').delete().eq('user_id',currentUser.id).eq('goal_id',gid).eq('day',day);goalDays=goalDays.filter(function(d){return!(d.goal_id===gid&&d.day===day)})}
+      else{await sb.from('goal_days').insert({user_id:currentUser.id,goal_id:gid,day:day});goalDays.push({goal_id:gid,day:day})}
       renderGoals();
     }
 
-    function renderGoals() {
-      var container = document.getElementById('goals-container');
-      container.innerHTML = '';
-      if (goals.length === 0) {
-        container.innerHTML = '<div style="color:#8E8E93; text-align:center; margin-top:40px;">No goals yet. Tap + to add one.</div>';
-        return;
-      }
-      goals.forEach(function(g) {
-        var totalDays = g.checkDays ? g.checkDays.length : 1;
-        var checkedCount = g.checked ? g.checked.length : 0;
-        var pct = Math.round((checkedCount / totalDays) * 100);
-        var todayStr = localDateStr(new Date());
-
-        // Show: today + up to 7 past days (NO future days)
-        var nearbyDays = (g.checkDays || []).filter(function(d) {
-          if (d > todayStr) return false; // No future days
-          if (d === todayStr) return true;
-          var diffMs = new Date(todayStr + 'T12:00:00') - new Date(d + 'T12:00:00');
-          var diffDays = Math.round(diffMs / 86400000);
-          return diffDays <= 7;
+    function renderGoals(){
+      var c=document.getElementById('goals-container');c.innerHTML='';
+      if(goals.length===0){c.innerHTML='<div style="color:var(--txt2);text-align:center;margin-top:40px">No goals yet. Tap + to add one.</div>';return}
+      goals.forEach(function(g){
+        var ad=buildDays(g.startDate,g.date),cc=goalDays.filter(function(d){return d.goal_id===g.id}).length;
+        var pct=ad.length===0?0:Math.round(cc/ad.length*100),ts=ld(new Date());
+        var nd=ad.filter(function(d){if(d>ts)return false;if(d===ts)return true;var df=Math.round((new Date(ts+'T12:00:00')-new Date(d+'T12:00:00'))/864e5);return df<=7});
+        var clHTML='';
+        nd.forEach(function(day){
+          var ck=goalDays.some(function(d){return d.goal_id===g.id&&d.day===day});
+          var lbl=day===ts?'Today':new Date(day.split('-')[0],day.split('-')[1]-1,day.split('-')[2]).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+          clHTML+='<div class="goal-row"><div class="goal-chk '+(ck?'checked':'')+'" onclick="toggleGoalDay('+g.id+',\''+day+'\')"></div><span class="goal-lbl '+(ck?'checked':'')+'">'+lbl+'</span></div>';
         });
-
-        var checklistHTML = '';
-        nearbyDays.forEach(function(day) {
-          var isChecked = g.checked && g.checked.indexOf(day) !== -1;
-          var label;
-          if (day === todayStr) {
-            label = 'Today';
-          } else {
-            var parts = day.split('-');
-            var dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            label = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-          }
-          checklistHTML +=
-            '<div class="goal-check-row">' +
-              '<div class="goal-check ' + (isChecked ? 'checked' : '') + '" onclick="toggleGoalDay(' + g.id + ', \'' + day + '\')"></div>' +
-              '<span class="goal-check-label ' + (isChecked ? 'checked' : '') + '">' + label + '</span>' +
-            '</div>';
-        });
-
-        var div = document.createElement('div');
-        div.className = 'goal-card';
-        div.innerHTML =
-          '<div class="goal-header">' +
-            '<div>' +
-              '<div class="goal-title">' + g.title + '</div>' +
-              '<div class="goal-date">Target: ' + (g.date || 'No date') + '</div>' +
-            '</div>' +
-            '<div style="font-weight:700; color:var(--accent-color);">' + pct + '%</div>' +
-          '</div>' +
-          '<div class="progress-track">' +
-            '<div class="progress-bar" style="width: ' + pct + '%"></div>' +
-          '</div>' +
-          '<div class="goal-checklist">' + checklistHTML + '</div>' +
-          '<div style="text-align:center; margin-top:6px; font-size:12px; color:var(--text-secondary);">' +
-            checkedCount + ' / ' + totalDays + ' days completed' +
-          '</div>' +
-          '<div class="goal-actions">' +
-            '<button class="goal-action-btn" onclick="openGoalModal(' + g.id + ')">Edit</button>' +
-            '<button class="goal-action-btn danger" onclick="confirmDeleteGoal(' + g.id + ')">Delete</button>' +
-          '</div>';
-        container.appendChild(div);
+        var div=document.createElement('div');div.className='goal-card';
+        div.innerHTML='<div class="goal-header"><div><div class="goal-title">'+g.title+'</div><div class="goal-date">Target: '+g.date+'</div></div><div style="font-weight:700;color:var(--accent)">'+pct+'%</div></div><div class="prog-track"><div class="prog-bar" style="width:'+pct+'%"></div></div><div class="goal-cl">'+clHTML+'</div><div style="text-align:center;margin-top:6px;font-size:12px;color:var(--txt2)">'+cc+' / '+ad.length+' days completed</div><div class="goal-acts"><button class="goal-btn" onclick="openGoalModal('+g.id+')">Edit</button><button class="goal-btn danger" onclick="confirmDeleteGoal('+g.id+')">Delete</button></div>';
+        c.appendChild(div);
       });
     }
 
-    function confirmDeleteGoal(id) {
-      if (confirm("Delete this goal?")) {
-        goals = goals.filter(function(g) { return g.id !== id; });
-        renderGoals();
-      }
-    }
+    async function confirmDeleteGoal(id){if(!confirm("Delete this goal?"))return;await sb.from('goals').delete().eq('id',id).eq('user_id',currentUser.id);goalDays=goalDays.filter(function(d){return d.goal_id!==id});goals=goals.filter(function(g){return g.id!==id});renderGoals()}
 
-    function switchView(viewName, el) {
-      document.querySelectorAll('.view-section').forEach(function(v) { v.classList.remove('active'); });
-      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-      document.getElementById('view-' + viewName).classList.add('active');
-      el.classList.add('active');
-    }
+    function switchView(v,el){document.querySelectorAll('.view-section').forEach(function(s){s.classList.remove('active')});document.querySelectorAll('.bnav-item').forEach(function(n){n.classList.remove('active')});document.getElementById('view-'+v).classList.add('active');el.classList.add('active')}
+
+    checkAuth();
   </script>
 </body>
 </html>
