@@ -31,7 +31,6 @@
     .view-section.active { display: block; animation: fadeIn 0.2s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* --- Top Bar --- */
     .top-bar {
       display: flex; justify-content: space-between; align-items: flex-end;
       padding: 16px 20px 10px; position: sticky; top: 0;
@@ -40,7 +39,6 @@
     .app-title { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
     .top-actions { display: flex; align-items: center; gap: 16px; }
 
-    /* Date Selector */
     .date-selector-container { position: relative; }
     .date-selector {
       color: var(--text-primary); font-size: 17px; font-weight: 600;
@@ -61,7 +59,6 @@
     .date-option.selected { color: var(--accent-color); font-weight: 600; }
     .icon-btn { font-size: 22px; color: var(--accent-color); cursor: pointer; padding: 4px; }
 
-    /* --- Habit List --- */
     .habit-list { padding: 10px 16px; display: flex; flex-direction: column; gap: 12px; }
     .habit-card {
       background-color: var(--card-bg); border-radius: 14px; padding: 16px;
@@ -88,14 +85,12 @@
     }
     .check-circle.completed::after { content: '\2713'; font-size: 18px; color: black; font-weight: 800; }
 
-    /* Weekly progress badge */
     .week-badge {
       font-size: 11px; color: var(--text-secondary); background: rgba(255,255,255,0.06);
       padding: 2px 8px; border-radius: 10px; margin-left: 8px; white-space: nowrap;
     }
     .week-badge.complete { color: var(--success-color); background: rgba(48, 209, 88, 0.1); }
 
-    /* --- Stats View --- */
     .stats-container { padding: 16px; }
     .stats-card-large {
       background-color: var(--card-bg); border-radius: 18px; padding: 24px 20px;
@@ -127,7 +122,6 @@
     .heat-dot { width: 14px; height: 14px; background-color: #2C2C2E; border-radius: 4px; }
     .heat-dot.active { background-color: var(--accent-color); }
 
-    /* --- Goals View --- */
     .goal-card {
       background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 12px;
     }
@@ -137,7 +131,6 @@
     .progress-track { background: #2C2C2E; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 12px; }
     .progress-bar { height: 100%; background: var(--accent-color); border-radius: 5px; transition: width 0.3s ease; }
 
-    /* Goal checklist */
     .goal-checklist { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
     .goal-check-row {
       display: flex; align-items: center; gap: 10px; padding: 8px 0;
@@ -160,7 +153,6 @@
     }
     .goal-action-btn.danger { background: rgba(255,69,58,0.15); color: var(--danger-color); }
 
-    /* --- Bottom Nav --- */
     .bottom-nav {
       position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
       background-color: rgba(28, 28, 30, 0.85); backdrop-filter: blur(20px);
@@ -175,7 +167,6 @@
     }
     .nav-item.active { background-color: #3A3A3C; color: white; }
 
-    /* --- Modals --- */
     .modal {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: black; z-index: 2000; display: none; flex-direction: column;
@@ -196,7 +187,6 @@
     .form-input { background: transparent; border: none; color: white; font-size: 17px; flex: 1; margin-left: 12px; outline: none; }
     select:focus, input:focus { outline: none; }
 
-    /* Habit Detail View */
     .habit-detail-view {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: black; z-index: 1500; display: none; flex-direction: column;
@@ -204,20 +194,19 @@
     }
     .habit-detail-view.active { display: flex; }
     @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
-
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- ================= VIEW: HABITS ================= -->
+  <!-- VIEW: HABITS -->
   <div id="view-habits" class="view-section active">
     <div class="top-bar">
       <div class="app-title">Habits</div>
       <div class="top-actions">
         <div class="date-selector-container">
           <div class="date-selector" onclick="toggleDateDropdown()">
-            <span id="current-date-display">Today</span> <span style="font-size:12px; opacity:0.7;">\u25BC</span>
+            <span id="current-date-display">Today</span> <span style="font-size:12px; opacity:0.7;">▼</span>
           </div>
           <div class="date-dropdown" id="date-dropdown">
             <div class="date-option" onclick="changeDate(-1)">Yesterday</div>
@@ -227,13 +216,13 @@
             <div class="date-option" style="color:var(--accent-color)">Pick a Date...</div>
           </div>
         </div>
-        <div class="icon-btn" onclick="openAddModal()">&#10133;</div>
+        <div class="icon-btn" onclick="openAddModal()">+</div>
       </div>
     </div>
     <div class="habit-list" id="habits-container"></div>
   </div>
 
-  <!-- ================= VIEW: STATS ================= -->
+  <!-- VIEW: STATS -->
   <div id="view-stats" class="view-section stats-container">
     <div class="app-title" style="margin-bottom: 20px;">Statistics</div>
     <div class="stats-card-large">
@@ -265,25 +254,25 @@
     </div>
   </div>
 
-  <!-- ================= VIEW: GOALS ================= -->
+  <!-- VIEW: GOALS -->
   <div id="view-goals" class="view-section" style="padding: 20px;">
     <div class="top-bar" style="padding: 0 0 20px 0;">
       <div class="app-title">Goals</div>
-      <div class="icon-btn" onclick="openGoalModal()">&#10133;</div>
+      <div class="icon-btn" onclick="openGoalModal()">+</div>
     </div>
     <div id="goals-container">
       <div style="color:#8E8E93; text-align:center; margin-top:40px;">No goals yet. Tap + to add one.</div>
     </div>
   </div>
 
-  <!-- ================= BOTTOM NAV ================= -->
+  <!-- BOTTOM NAV -->
   <div class="bottom-nav">
-    <div class="nav-item active" onclick="switchView('habits', this)">\uD83D\uDCC5</div>
-    <div class="nav-item" onclick="switchView('stats', this)">\uD83D\uDCCA</div>
-    <div class="nav-item" onclick="switchView('goals', this)">\uD83C\uDFAF</div>
+    <div class="nav-item active" onclick="switchView('habits', this)">📅</div>
+    <div class="nav-item" onclick="switchView('stats', this)">📊</div>
+    <div class="nav-item" onclick="switchView('goals', this)">🎯</div>
   </div>
 
-  <!-- ================= MODAL: ADD/EDIT HABIT ================= -->
+  <!-- MODAL: ADD/EDIT HABIT -->
   <div id="modal-habit" class="modal">
     <div class="modal-header">
       <div class="modal-action" onclick="closeModal('habit')">Cancel</div>
@@ -293,18 +282,18 @@
     <div class="modal-content">
       <div class="form-group">
         <div class="form-row">
-          <span>\uD83D\uDCDD</span>
+          <span>✏️</span>
           <input type="text" id="habit-name" class="form-input" placeholder="Name" />
         </div>
         <div class="form-row">
-          <span>\uD83D\uDCC4</span>
+          <span>📄</span>
           <input type="text" id="habit-desc" class="form-input" placeholder="Description (e.g. 5 pages)" />
         </div>
       </div>
       <div class="form-group">
         <div class="form-row" style="justify-content: space-between;">
           <span>Icon</span>
-          <input type="text" id="habit-icon" class="form-input" value="\uD83D\uDCDA" style="text-align:right; width:50px;" />
+          <input type="text" id="habit-icon" class="form-input" value="📚" style="text-align:right; width:50px;" />
         </div>
         <div class="form-row" style="justify-content: space-between;">
           <span>Color</span>
@@ -338,7 +327,7 @@
     </div>
   </div>
 
-  <!-- ================= MODAL: ADD/EDIT GOAL ================= -->
+  <!-- MODAL: ADD/EDIT GOAL -->
   <div id="modal-goal" class="modal">
     <div class="modal-header">
       <div class="modal-action" onclick="closeModal('goal')">Cancel</div>
@@ -348,11 +337,11 @@
     <div class="modal-content">
       <div class="form-group">
         <div class="form-row">
-          <span>\uD83C\uDFAF</span>
+          <span>🎯</span>
           <input type="text" id="goal-title" class="form-input" placeholder="Goal Title" />
         </div>
         <div class="form-row">
-          <span>\uD83D\uDCC5</span>
+          <span>📅</span>
           <input type="date" id="goal-date" class="form-input" style="color-scheme: dark;" />
         </div>
       </div>
@@ -364,16 +353,16 @@
     </div>
   </div>
 
-  <!-- ================= VIEW: HABIT DETAIL ================= -->
+  <!-- HABIT DETAIL VIEW -->
   <div id="view-habit-detail" class="habit-detail-view">
     <div class="modal-header">
-      <div class="modal-action" onclick="closeHabitDetail()">\u2190 Back</div>
+      <div class="modal-action" onclick="closeHabitDetail()">← Back</div>
       <div class="modal-title" id="detail-title">Habit Details</div>
       <div class="modal-action" onclick="editCurrentHabit()">Edit</div>
     </div>
     <div class="modal-content">
       <div class="stats-card-large" style="padding: 30px;">
-        <div style="font-size: 50px; margin-bottom: 16px;" id="detail-icon">\uD83D\uDCDA</div>
+        <div style="font-size: 50px; margin-bottom: 16px;" id="detail-icon">📚</div>
         <div style="font-size: 28px; font-weight: 700;" id="detail-name">Reading</div>
         <div style="color: var(--text-secondary); margin-top: 6px; font-size: 16px;" id="detail-desc">5 pages</div>
         <div style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;" id="detail-freq"></div>
@@ -399,18 +388,18 @@
 
   <script>
     // ===================== DATA STORE =====================
-    let habits = [
-      { id: 1, name: "Reading", desc: "5 pages", icon: "\uD83D\uDCDA", color: "#FF453A", frequency: 7, completions: [] },
-      { id: 2, name: "Drink Water", desc: "3000 ml", icon: "\uD83D\uDCA7", color: "#0A84FF", frequency: 7, completions: [] },
-      { id: 3, name: "Exercise", desc: "60 mins", icon: "\uD83C\uDFCB\uFE0F", color: "#FF9F0A", frequency: 7, completions: [] }
+    var habits = [
+      { id: 1, name: "Reading", desc: "5 pages", icon: "📚", color: "#FF453A", frequency: 7, completions: [] },
+      { id: 2, name: "Drink Water", desc: "3000 ml", icon: "💧", color: "#0A84FF", frequency: 7, completions: [] },
+      { id: 3, name: "Exercise", desc: "60 mins", icon: "🏋️", color: "#FF9F0A", frequency: 7, completions: [] }
     ];
-    let goals = [];
-    let selectedDate = new Date();
-    let currentHabitId = null;
-    let currentGoalId = null;
+    var goals = [];
+    var selectedDate = new Date();
+    var currentHabitId = null;
+    var currentGoalId = null;
 
     // ===================== INIT =====================
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
       renderHabits();
       renderStats();
       renderGoals();
@@ -418,67 +407,63 @@
     });
 
     // ===================== WEEK HELPERS =====================
-    // Get Monday of the week containing date d
     function getMonday(d) {
-      const dt = new Date(d);
-      const day = dt.getDay();
-      const diff = day === 0 ? -6 : 1 - day; // Monday = 1
+      var dt = new Date(d);
+      var day = dt.getDay();
+      var diff = day === 0 ? -6 : 1 - day;
       dt.setDate(dt.getDate() + diff);
       dt.setHours(0,0,0,0);
       return dt;
     }
 
-    // Count completions for a habit in the week containing date d
     function weekCompletions(habit, d) {
-      const mon = getMonday(d);
-      const sun = new Date(mon);
+      var mon = getMonday(d);
+      var sun = new Date(mon);
       sun.setDate(sun.getDate() + 6);
-      return habit.completions.filter(dateStr => {
-        const cd = new Date(dateStr);
+      return habit.completions.filter(function(dateStr) {
+        var cd = new Date(dateStr);
         return cd >= mon && cd <= sun;
       }).length;
     }
 
     // ===================== HABITS RENDERING =====================
     function renderHabits() {
-      const container = document.getElementById('habits-container');
+      var container = document.getElementById('habits-container');
       container.innerHTML = '';
-      const dateKey = selectedDate.toDateString();
+      var dateKey = selectedDate.toDateString();
 
-      habits.forEach(habit => {
-        const isCompleted = habit.completions.includes(dateKey);
-        const weekCount = weekCompletions(habit, selectedDate);
-        const weekTarget = habit.frequency || 7;
-        const weekMet = weekCount >= weekTarget;
+      habits.forEach(function(habit) {
+        var isCompleted = habit.completions.includes(dateKey);
+        var weekCount = weekCompletions(habit, selectedDate);
+        var weekTarget = habit.frequency || 7;
+        var weekMet = weekCount >= weekTarget;
 
-        const div = document.createElement('div');
+        var div = document.createElement('div');
         div.className = 'habit-card';
-        div.innerHTML = `
-          <div class="habit-left" onclick="openHabitDetail(${habit.id})">
-            <div class="habit-icon">${habit.icon}</div>
-            <div class="habit-details">
-              <div class="habit-name">${habit.name}</div>
-              <div class="habit-meta">
-                ${habit.desc}
-                ${weekTarget < 7 ? '<span class="week-badge ' + (weekMet ? 'complete' : '') + '">' + weekCount + '/' + weekTarget + ' this week</span>' : ''}
-              </div>
-            </div>
-          </div>
-          <div class="check-circle ${isCompleted ? 'completed' : ''}"
-               onclick="toggleHabit(${habit.id})"
-               style="${isCompleted ? 'background-color:' + habit.color + '; border-color:' + habit.color : ''}">
-          </div>
-        `;
+        div.innerHTML =
+          '<div class="habit-left" onclick="openHabitDetail(' + habit.id + ')">' +
+            '<div class="habit-icon">' + habit.icon + '</div>' +
+            '<div class="habit-details">' +
+              '<div class="habit-name">' + habit.name + '</div>' +
+              '<div class="habit-meta">' + habit.desc +
+                (weekTarget < 7 ? ' <span class="week-badge ' + (weekMet ? 'complete' : '') + '">' + weekCount + '/' + weekTarget + ' this week</span>' : '') +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="check-circle ' + (isCompleted ? 'completed' : '') + '"' +
+               ' onclick="toggleHabit(' + habit.id + ')"' +
+               ' style="' + (isCompleted ? 'background-color:' + habit.color + '; border-color:' + habit.color : '') + '">' +
+          '</div>';
         container.appendChild(div);
       });
     }
 
     function toggleHabit(id) {
-      const habit = habits.find(h => h.id === id);
-      const dateKey = selectedDate.toDateString();
+      var habit = habits.find(function(h) { return h.id === id; });
+      var dateKey = selectedDate.toDateString();
 
       if (habit.completions.includes(dateKey)) {
-        habit.completions = habit.completions.filter(d => d !== dateKey);
+        habit.completions = habit.completions.filter(function(d) { return d !== dateKey; });
       } else {
         habit.completions.push(dateKey);
         if (navigator.vibrate) navigator.vibrate(10);
@@ -501,13 +486,13 @@
     }
 
     function updateDateDisplay() {
-      const today = new Date();
-      let label = selectedDate.toLocaleDateString();
+      var today = new Date();
+      var label = selectedDate.toLocaleDateString();
       if (selectedDate.toDateString() === today.toDateString()) label = "Today";
       else if (selectedDate.getDate() === today.getDate() - 1 && selectedDate.getMonth() === today.getMonth()) label = "Yesterday";
       else if (selectedDate.getDate() === today.getDate() + 1 && selectedDate.getMonth() === today.getMonth()) label = "Tomorrow";
       document.getElementById('current-date-display').textContent = label;
-      document.querySelectorAll('.date-option').forEach(el => el.classList.remove('selected'));
+      document.querySelectorAll('.date-option').forEach(function(el) { el.classList.remove('selected'); });
       if (label === "Today") document.querySelectorAll('.date-option')[1].classList.add('selected');
     }
 
@@ -517,7 +502,7 @@
       document.getElementById('habit-modal-title').textContent = "New Habit";
       document.getElementById('habit-name').value = "";
       document.getElementById('habit-desc').value = "";
-      document.getElementById('habit-icon').value = "\uD83D\uDCDA";
+      document.getElementById('habit-icon').value = "📚";
       document.getElementById('habit-color').value = "#0A84FF";
       document.getElementById('habit-frequency').value = "7";
       document.getElementById('delete-section').style.display = 'none';
@@ -525,7 +510,7 @@
     }
 
     function editCurrentHabit() {
-      const habit = habits.find(h => h.id === currentHabitId);
+      var habit = habits.find(function(h) { return h.id === currentHabitId; });
       document.getElementById('habit-modal-title').textContent = "Edit Habit";
       document.getElementById('habit-name').value = habit.name;
       document.getElementById('habit-desc').value = habit.desc;
@@ -538,18 +523,18 @@
     }
 
     function saveHabit() {
-      const name = document.getElementById('habit-name').value;
-      const desc = document.getElementById('habit-desc').value;
-      const icon = document.getElementById('habit-icon').value;
-      const color = document.getElementById('habit-color').value;
-      const frequency = parseInt(document.getElementById('habit-frequency').value);
+      var name = document.getElementById('habit-name').value;
+      var desc = document.getElementById('habit-desc').value;
+      var icon = document.getElementById('habit-icon').value;
+      var color = document.getElementById('habit-color').value;
+      var frequency = parseInt(document.getElementById('habit-frequency').value);
       if (!name) return;
 
       if (currentHabitId) {
-        const habit = habits.find(h => h.id === currentHabitId);
+        var habit = habits.find(function(h) { return h.id === currentHabitId; });
         habit.name = name; habit.desc = desc; habit.icon = icon; habit.color = color; habit.frequency = frequency;
       } else {
-        habits.push({ id: Date.now(), name, desc, icon, color, frequency, completions: [] });
+        habits.push({ id: Date.now(), name: name, desc: desc, icon: icon, color: color, frequency: frequency, completions: [] });
       }
       closeModal('habit');
       renderHabits();
@@ -558,7 +543,7 @@
 
     function deleteHabit() {
       if (confirm("Delete this habit?")) {
-        habits = habits.filter(h => h.id !== currentHabitId);
+        habits = habits.filter(function(h) { return h.id !== currentHabitId; });
         closeModal('habit');
         renderHabits();
         renderStats();
@@ -572,7 +557,7 @@
     // ===================== HABIT DETAIL =====================
     function openHabitDetail(id) {
       currentHabitId = id;
-      const habit = habits.find(h => h.id === id);
+      var habit = habits.find(function(h) { return h.id === id; });
 
       document.getElementById('detail-name').textContent = habit.name;
       document.getElementById('detail-desc').textContent = habit.desc;
@@ -580,7 +565,7 @@
       document.getElementById('detail-total').textContent = habit.completions.length;
       document.getElementById('detail-streak').textContent = calculateStreak(habit);
 
-      const freq = habit.frequency || 7;
+      var freq = habit.frequency || 7;
       document.getElementById('detail-freq').textContent = freq === 7 ? "Every day" : freq + " times per week";
 
       renderDetailHeatmap(habit);
@@ -593,24 +578,22 @@
 
     function calculateStreak(habit) {
       if (habit.completions.length === 0) return "0";
-      const freq = habit.frequency || 7;
+      var freq = habit.frequency || 7;
 
       if (freq === 7) {
-        // Daily: count consecutive days backwards from today
-        let streak = 0;
-        let d = new Date();
+        var streak = 0;
+        var d = new Date();
         d.setHours(0,0,0,0);
         while (habit.completions.includes(d.toDateString())) {
           streak++;
           d.setDate(d.getDate() - 1);
         }
-        return "\uD83D\uDD25 " + streak;
+        return "🔥 " + streak;
       } else {
-        // Weekly: count consecutive weeks where target was met
-        let streak = 0;
-        let checkDate = new Date();
+        var streak = 0;
+        var checkDate = new Date();
         while (true) {
-          const wc = weekCompletions(habit, checkDate);
+          var wc = weekCompletions(habit, checkDate);
           if (wc >= freq) {
             streak++;
             checkDate.setDate(checkDate.getDate() - 7);
@@ -618,57 +601,54 @@
             break;
           }
         }
-        return "\uD83D\uDD25 " + streak + (streak === 1 ? " week" : " weeks");
+        return "🔥 " + streak + (streak === 1 ? " week" : " weeks");
       }
     }
 
     // ===================== STATS =====================
     function renderStats() {
-      const today = new Date();
-      // Weekly completion: across all habits, what % of weekly targets are met this week?
-      let totalTarget = 0;
-      let totalDone = 0;
-      habits.forEach(h => {
-        const freq = h.frequency || 7;
-        const wc = weekCompletions(h, today);
+      var today = new Date();
+      var totalTarget = 0;
+      var totalDone = 0;
+      habits.forEach(function(h) {
+        var freq = h.frequency || 7;
+        var wc = weekCompletions(h, today);
         totalTarget += freq;
-        totalDone += Math.min(wc, freq); // Cap at target
+        totalDone += Math.min(wc, freq);
       });
 
-      const pct = totalTarget === 0 ? 0 : Math.round((totalDone / totalTarget) * 100);
+      var pct = totalTarget === 0 ? 0 : Math.round((totalDone / totalTarget) * 100);
       document.getElementById('stats-percentage').textContent = pct + '%';
-      const deg = -225 + ((pct / 100) * 180);
-      document.getElementById('gauge-fill').style.transform = `rotate(${deg}deg)`;
+      var deg = -225 + ((pct / 100) * 180);
+      document.getElementById('gauge-fill').style.transform = 'rotate(' + deg + 'deg)';
 
-      // Accuracy: % of habits that hit their weekly target this week
-      const habitsOnTarget = habits.filter(h => weekCompletions(h, today) >= (h.frequency || 7)).length;
-      const accuracy = habits.length === 0 ? 0 : Math.round((habitsOnTarget / habits.length) * 100);
+      var habitsOnTarget = habits.filter(function(h) { return weekCompletions(h, today) >= (h.frequency || 7); }).length;
+      var accuracy = habits.length === 0 ? 0 : Math.round((habitsOnTarget / habits.length) * 100);
       document.getElementById('stats-accuracy').textContent = accuracy + '%';
 
-      // Consistency: % of weeks (last 4) where all habits met targets
-      let consistentWeeks = 0;
-      for (let w = 0; w < 4; w++) {
-        const weekDate = new Date(today);
+      var consistentWeeks = 0;
+      for (var w = 0; w < 4; w++) {
+        var weekDate = new Date(today);
         weekDate.setDate(weekDate.getDate() - (w * 7));
-        const allMet = habits.every(h => weekCompletions(h, weekDate) >= (h.frequency || 7));
+        var allMet = habits.every(function(h) { return weekCompletions(h, weekDate) >= (h.frequency || 7); });
         if (allMet && habits.length > 0) consistentWeeks++;
       }
-      const consistency = habits.length === 0 ? 0 : Math.round((consistentWeeks / 4) * 100);
+      var consistency = habits.length === 0 ? 0 : Math.round((consistentWeeks / 4) * 100);
       document.getElementById('stats-consistency').textContent = consistency + '%';
 
       renderHeatmap();
     }
 
     function renderHeatmap() {
-      const container = document.getElementById('heat-map');
+      var container = document.getElementById('heat-map');
       container.innerHTML = '';
-      for (let i = 0; i < 70; i++) {
-        const d = new Date();
+      for (var i = 0; i < 70; i++) {
+        var d = new Date();
         d.setDate(d.getDate() - (69 - i));
-        const dateKey = d.toDateString();
-        const done = habits.filter(h => h.completions.includes(dateKey)).length;
-        const active = done > 0 && done >= habits.length / 2;
-        const dot = document.createElement('div');
+        var dateKey = d.toDateString();
+        var done = habits.filter(function(h) { return h.completions.includes(dateKey); }).length;
+        var active = done > 0 && done >= habits.length / 2;
+        var dot = document.createElement('div');
         dot.className = 'heat-dot';
         if (active) dot.classList.add('active');
         container.appendChild(dot);
@@ -676,13 +656,13 @@
     }
 
     function renderDetailHeatmap(habit) {
-      const container = document.getElementById('detail-heatmap');
+      var container = document.getElementById('detail-heatmap');
       container.innerHTML = '';
-      for (let i = 0; i < 60; i++) {
-        const d = new Date();
+      for (var i = 0; i < 60; i++) {
+        var d = new Date();
         d.setDate(d.getDate() - (59 - i));
-        const active = habit.completions.includes(d.toDateString());
-        const dot = document.createElement('div');
+        var active = habit.completions.includes(d.toDateString());
+        var dot = document.createElement('div');
         dot.className = 'heat-dot';
         if (active) dot.classList.add('active');
         container.appendChild(dot);
@@ -694,7 +674,7 @@
       currentGoalId = editId || null;
 
       if (currentGoalId) {
-        const goal = goals.find(g => g.id === currentGoalId);
+        var goal = goals.find(function(g) { return g.id === currentGoalId; });
         document.getElementById('goal-modal-title').textContent = "Edit Goal";
         document.getElementById('goal-title').value = goal.title;
         document.getElementById('goal-date').value = goal.date || '';
@@ -710,25 +690,23 @@
     }
 
     function saveGoal() {
-      const title = document.getElementById('goal-title').value;
-      const date = document.getElementById('goal-date').value;
+      var title = document.getElementById('goal-title').value;
+      var date = document.getElementById('goal-date').value;
       if (!title || !date) return;
 
       if (currentGoalId) {
-        const goal = goals.find(g => g.id === currentGoalId);
+        var goal = goals.find(function(g) { return g.id === currentGoalId; });
         goal.title = title;
         goal.date = date;
-        // Recalculate checkboxes if date changed
         goal.checkDays = buildCheckDays(goal.startDate, date);
-        // Keep existing checks that are still valid
-        const validDays = new Set(goal.checkDays);
-        goal.checked = (goal.checked || []).filter(d => validDays.has(d));
+        var validDays = new Set(goal.checkDays);
+        goal.checked = (goal.checked || []).filter(function(d) { return validDays.has(d); });
       } else {
-        const startDate = new Date().toISOString().slice(0, 10);
-        const checkDays = buildCheckDays(startDate, date);
+        var startDate = new Date().toISOString().slice(0, 10);
+        var checkDays = buildCheckDays(startDate, date);
         goals.push({
-          id: Date.now(), title, date, startDate,
-          checkDays, checked: []
+          id: Date.now(), title: title, date: date, startDate: startDate,
+          checkDays: checkDays, checked: []
         });
       }
 
@@ -738,18 +716,17 @@
 
     function deleteGoal() {
       if (confirm("Delete this goal?")) {
-        goals = goals.filter(g => g.id !== currentGoalId);
+        goals = goals.filter(function(g) { return g.id !== currentGoalId; });
         closeModal('goal');
         renderGoals();
       }
     }
 
-    // Build array of date strings (YYYY-MM-DD) from start to target
     function buildCheckDays(startStr, endStr) {
-      const days = [];
-      const start = new Date(startStr);
-      const end = new Date(endStr);
-      const d = new Date(start);
+      var days = [];
+      var start = new Date(startStr);
+      var end = new Date(endStr);
+      var d = new Date(start);
       while (d <= end) {
         days.push(d.toISOString().slice(0, 10));
         d.setDate(d.getDate() + 1);
@@ -758,9 +735,9 @@
     }
 
     function toggleGoalDay(goalId, day) {
-      const goal = goals.find(g => g.id === goalId);
+      var goal = goals.find(function(g) { return g.id === goalId; });
       if (goal.checked.includes(day)) {
-        goal.checked = goal.checked.filter(d => d !== day);
+        goal.checked = goal.checked.filter(function(d) { return d !== day; });
       } else {
         goal.checked.push(day);
       }
@@ -768,7 +745,7 @@
     }
 
     function renderGoals() {
-      const container = document.getElementById('goals-container');
+      var container = document.getElementById('goals-container');
       container.innerHTML = '';
 
       if (goals.length === 0) {
@@ -776,70 +753,65 @@
         return;
       }
 
-      goals.forEach(g => {
-        const totalDays = g.checkDays ? g.checkDays.length : 1;
-        const checkedCount = g.checked ? g.checked.length : 0;
-        const pct = Math.round((checkedCount / totalDays) * 100);
+      goals.forEach(function(g) {
+        var totalDays = g.checkDays ? g.checkDays.length : 1;
+        var checkedCount = g.checked ? g.checked.length : 0;
+        var pct = Math.round((checkedCount / totalDays) * 100);
 
-        // Show only recent ~7 unchecked + a few checked for context
-        const todayStr = new Date().toISOString().slice(0, 10);
-        // Show: up to 5 past days + today + 1 future
-        const nearbyDays = (g.checkDays || []).filter(d => {
-          const diff = Math.floor((new Date(todayStr) - new Date(d)) / 86400000);
+        var todayStr = new Date().toISOString().slice(0, 10);
+        var nearbyDays = (g.checkDays || []).filter(function(d) {
+          var diff = Math.floor((new Date(todayStr) - new Date(d)) / 86400000);
           return diff >= -1 && diff <= 5;
         });
 
-        let checklistHTML = '';
-        nearbyDays.forEach(day => {
-          const isChecked = g.checked && g.checked.includes(day);
-          const label = day === todayStr ? 'Today' : new Date(day + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-          const isPast = day < todayStr;
-          const isFuture = day > todayStr;
-          checklistHTML += `
-            <div class="goal-check-row" style="${isFuture ? 'opacity:0.5' : ''}">
-              <div class="goal-check ${isChecked ? 'checked' : ''}" onclick="toggleGoalDay(${g.id}, '${day}')"></div>
-              <span class="goal-check-label ${isChecked ? 'checked' : ''}">${label}</span>
-            </div>
-          `;
+        var checklistHTML = '';
+        nearbyDays.forEach(function(day) {
+          var isChecked = g.checked && g.checked.includes(day);
+          var label = day === todayStr ? 'Today' : new Date(day + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          var isFuture = day > todayStr;
+          checklistHTML +=
+            '<div class="goal-check-row" style="' + (isFuture ? 'opacity:0.5' : '') + '">' +
+              '<div class="goal-check ' + (isChecked ? 'checked' : '') + '" onclick="toggleGoalDay(' + g.id + ', \'' + day + '\')"></div>' +
+              '<span class="goal-check-label ' + (isChecked ? 'checked' : '') + '">' + label + '</span>' +
+            '</div>';
         });
 
-        const div = document.createElement('div');
+        var div = document.createElement('div');
         div.className = 'goal-card';
-        div.innerHTML = `
-          <div class="goal-header">
-            <div>
-              <div class="goal-title">${g.title}</div>
-              <div class="goal-date">Target: ${g.date || 'No date'}</div>
-            </div>
-            <div style="font-weight:700; color:var(--accent-color);">${pct}%</div>
-          </div>
-          <div class="progress-track">
-            <div class="progress-bar" style="width: ${pct}%"></div>
-          </div>
-          <div class="goal-checklist">${checklistHTML}</div>
-          <div style="text-align:center; margin-top:6px; font-size:12px; color:var(--text-secondary);">
-            ${checkedCount} / ${totalDays} days completed
-          </div>
-          <div class="goal-actions">
-            <button class="goal-action-btn" onclick="openGoalModal(${g.id})">Edit</button>
-            <button class="goal-action-btn danger" onclick="confirmDeleteGoal(${g.id})">Delete</button>
-          </div>
-        `;
+        div.innerHTML =
+          '<div class="goal-header">' +
+            '<div>' +
+              '<div class="goal-title">' + g.title + '</div>' +
+              '<div class="goal-date">Target: ' + (g.date || 'No date') + '</div>' +
+            '</div>' +
+            '<div style="font-weight:700; color:var(--accent-color);">' + pct + '%</div>' +
+          '</div>' +
+          '<div class="progress-track">' +
+            '<div class="progress-bar" style="width: ' + pct + '%"></div>' +
+          '</div>' +
+          '<div class="goal-checklist">' + checklistHTML + '</div>' +
+          '<div style="text-align:center; margin-top:6px; font-size:12px; color:var(--text-secondary);">' +
+            checkedCount + ' / ' + totalDays + ' days completed' +
+          '</div>' +
+          '<div class="goal-actions">' +
+            '<button class="goal-action-btn" onclick="openGoalModal(' + g.id + ')">Edit</button>' +
+            '<button class="goal-action-btn danger" onclick="confirmDeleteGoal(' + g.id + ')">Delete</button>' +
+          '</div>';
         container.appendChild(div);
       });
     }
 
     function confirmDeleteGoal(id) {
       if (confirm("Delete this goal?")) {
-        goals = goals.filter(g => g.id !== id);
+        goals = goals.filter(function(g) { return g.id !== id; });
         renderGoals();
       }
     }
 
     // ===================== NAVIGATION =====================
     function switchView(viewName, el) {
-      document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.view-section').forEach(function(v) { v.classList.remove('active'); });
+      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
       document.getElementById('view-' + viewName).classList.add('active');
       el.classList.add('active');
     }
